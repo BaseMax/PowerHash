@@ -205,7 +205,7 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 		for(i = 0; i < 2 * COLS512; i++)
 		{
 			z[i] = ((uint32_t * ) input)[i];
-			Ptmp[i] = ctx - > chaining[i] ^ ((uint32_t * ) input)[i];
+			Ptmp[i] = ctx->chaining[i] ^ ((uint32_t * ) input)[i];
 		}
 		RND512Q((uint8_t * ) z,y,0x00000000);
 		RND512Q((uint8_t * ) y,z,0x01000000);
@@ -229,11 +229,11 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 		RND512P((uint8_t * ) y,Ptmp,0x00000009);
 		for(i = 0; i < 2 * COLS512; i++)
 		{
-			ctx - > chaining[i] ^= Ptmp[i] ^ Qtmp[i];
+			ctx->chaining[i] ^= Ptmp[i] ^ Qtmp[i];
 		}
-		ctx - > block_counter1++;
-		if(ctx - > block_counter1 == 0)
-			ctx - > block_counter2++;
+		ctx->block_counter1++;
+		if(ctx->block_counter1 == 0)
+			ctx->block_counter2++;
 	}
 }
 void groestl(const BitSequence * data,DataLength databitlen,BitSequence * hashval)
