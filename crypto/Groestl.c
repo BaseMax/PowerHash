@@ -64,7 +64,7 @@ const uint32_t T[512] = {0xa5f432c6, 0xc6a597f4, 0x84976ff8, 0xf884eb97, 0x99b05
 , 0xc35edc82, 0x82c31f5e, 0xb0cbe229, 0x29b052cb, 0x7799c35a, 0x5a77b499, 0x11332d1e, 0x1e113c33, 0xcb463d7b, 0x7bcbf646, 0xfc1fb7a8, 0xa8fc4b1f, 0xd6610c6d, 0x6dd6da61, 0x3a4e622c, 0x2c3a584e};
 
 
-#define ROTATE_COLUMN_DOWN(v1,v2,amount_bytes,temp_var)
+#define ROTATE_COLUMN_DOWN(v1,v2,amount_bytes,temp_var)\
 	temp_var = (v1 << (8 * amount_bytes)) | (v2 >> (8 * (4 - amount_bytes)));\
 	v2 = (v2 << (8 * amount_bytes)) | (v1 >> (8 * (4 - amount_bytes)));\
 	v1 = temp_var;
