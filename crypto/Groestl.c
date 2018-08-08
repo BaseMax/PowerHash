@@ -22,7 +22,6 @@ typedef struct
 	//uint32_t chaining[64/sizeof(uint32_t)];
 	uint32_t chaining[16];
 	BitSequence buffer[64];
-	int buf_ptr;
 } hashState;
 
 const uint32_t T[512] = {0xa5f432c6, 0xc6a597f4, 0x84976ff8, 0xf884eb97, 0x99b05eee, 0xee99c7b0, 0x8d8c7af6, 0xf68df78c, 0xd17e8ff, 0xff0de517, 0xbddc0ad6, 0xd6bdb7dc, 0xb1c816de, 0xdeb1a7c8, 0x54fc6d91, 0x915439fc
@@ -256,7 +255,6 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	//context.chaining[15] = 0;
 	/////////////
 	context.chaining[15] = u32BIG((uint32_t) 256);
-	context.buf_ptr = 0;
 	//int index = 0;
 	//Transform( & context,data + index,msglen - index);
 	Transform(&context,data,200);
@@ -265,16 +263,13 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	//while(index < msglen)
 	memcpy(context.buffer,data+192,8);
 	context.buffer[8] = 0x80;
-	context.buf_ptr=9;
 	int i,j = 0;//,hashbytelen = 32;
 	uint8_t * s = (BitSequence * ) context.chaining;
 	//while(context.buf_ptr < 56)
 	memset(context.buffer + 9,0,47);
-	context.buf_ptr = 64;//64
 	//while(context.buf_ptr > 64 - (int) sizeof(uint32_t))
 	context.buffer[63] = 4;
 	memset(context.buffer + 60,0,3);
-	context.buf_ptr=60;
 	memset(context.buffer + 56,0,4);
 	Transform(&context,context.buffer,64);
 	uint32_t temp[16];
