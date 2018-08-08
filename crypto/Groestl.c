@@ -7,6 +7,7 @@
  */
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #define COLS512 8
 #define SIZE512 64
@@ -24,11 +25,8 @@ typedef struct
 {
 	//uint32_t chaining[SIZE512/sizeof(uint32_t)];
 	uint32_t chaining[16];
-	uint32_t block_counter1,
-	block_counter2;
 	BitSequence buffer[SIZE512];
 	int buf_ptr;
-	int bits_in_last_byte;
 } hashState;
 
 const uint32_t T[512] = {0xa5f432c6, 0xc6a597f4, 0x84976ff8, 0xf884eb97, 0x99b05eee, 0xee99c7b0, 0x8d8c7af6, 0xf68df78c, 0xd17e8ff, 0xff0de517, 0xbddc0ad6, 0xd6bdb7dc, 0xb1c816de, 0xdeb1a7c8, 0x54fc6d91, 0x915439fc
@@ -239,7 +237,6 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 		ctx->chaining[14] ^= Ptmp[14] ^ Qtmp[14];
 		ctx->chaining[15] ^= Ptmp[15] ^ Qtmp[15];
 		///////////////////////////////////////
-		ctx->block_counter1++;
 	}
 }
 void groestl(const BitSequence * data,BitSequence * hashval)
@@ -265,56 +262,28 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	/////////////
 	context.chaining[15] = u32BIG((uint32_t) 256);
 	context.buf_ptr = 0;
-	context.block_counter1 = 0;
-	context.block_counter2 = 0;
-	context.bits_in_last_byte = 0;
-	int index = 0;
+	//int index = 0;
 	int msglen = 200;
 	int rem = 0;
-	Transform( & context,data + index,msglen - index);
+	//Transform( & context,data + index,msglen - index);
+	Transform(&context,data,msglen);
 	//index += ((msglen - index) / SIZE512) * SIZE512;
-	index += 192;
-	while(index < msglen)
-	{
-		context.buffer[(int) context.buf_ptr++] = data[index++];
-	}
+	//index += 192;
+	//while(index < msglen)
+	memcpy(context.buffer,data+192,8);
+	context.buffer[8] = 0x80;
+	context.buf_ptr=9;
 	int i,j = 0;//,hashbytelen = 32;
 	uint8_t * s = (BitSequence * ) context.chaining;
-	if(context.bits_in_last_byte)
-	{
-		context.buffer[(int) context.buf_ptr - 1] &= ((1 << context.bits_in_last_byte) - 1) << (8 - context.bits_in_last_byte);
-		context.buffer[(int) context.buf_ptr - 1] ^= 0x1 << (7 - context.bits_in_last_byte);
-		context.bits_in_last_byte = 0;
-	}
-	else
-		context.buffer[(int) context.buf_ptr++] = 0x80;
-	if(context.buf_ptr > 56)
-	{
-		while(context.buf_ptr < SIZE512)
-		{
-			context.buffer[(int) context.buf_ptr++] = 0;
-		}
-		Transform( & context,context.buffer,SIZE512);
-		context.buf_ptr = 0;
-	}
-	while(context.buf_ptr < 56)
-	{
-		context.buffer[(int) context.buf_ptr++] = 0;
-	}
-	context.block_counter1++;
-	context.buf_ptr = SIZE512;
+	//while(context.buf_ptr < 56)
+	memset(context.buffer + 9,0,47);
+	context.buf_ptr = SIZE512;//64
 	//while(context.buf_ptr > SIZE512 - (int) sizeof(uint32_t))
-	while(context.buf_ptr > 60)
-	{
-		context.buffer[(int) --context.buf_ptr] = (uint8_t) context.block_counter1;
-		context.block_counter1 >>= 8;
-	}
-	while(context.buf_ptr > 56)
-	{
-		context.buffer[(int) --context.buf_ptr] = (uint8_t) context.block_counter2;
-	}
+	context.buffer[63] = 4;
+	memset(context.buffer + 60,0,3);
+	context.buf_ptr=60;
+	memset(context.buffer + 56,0,4);
 	Transform(&context,context.buffer,SIZE512);
-	int k;
 	uint32_t temp[16];
 	uint32_t y[16];
 	uint32_t z[16];
@@ -398,78 +367,4 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	hashval[29] = s[61];
 	hashval[30] = s[62];
 	hashval[31] = s[63];
-	////////////////////////
-	context.chaining[0] = 0;
-	context.chaining[1] = 0;
-	context.chaining[2] = 0;
-	context.chaining[3] = 0;
-	context.chaining[4] = 0;
-	context.chaining[5] = 0;
-	context.chaining[6] = 0;
-	context.chaining[7] = 0;
-	////////////////////////
-	context.buffer[0] = 0;
-	context.buffer[1] = 0;
-	context.buffer[2] = 0;
-	context.buffer[3] = 0;
-	context.buffer[4] = 0;
-	context.buffer[5] = 0;
-	context.buffer[6] = 0;
-	context.buffer[7] = 0;
-	context.buffer[8] = 0;
-	context.buffer[9] = 0;
-	context.buffer[10] = 0;
-	context.buffer[11] = 0;
-	context.buffer[12] = 0;
-	context.buffer[13] = 0;
-	context.buffer[14] = 0;
-	context.buffer[15] = 0;
-	context.buffer[16] = 0;
-	context.buffer[17] = 0;
-	context.buffer[18] = 0;
-	context.buffer[19] = 0;
-	context.buffer[20] = 0;
-	context.buffer[21] = 0;
-	context.buffer[22] = 0;
-	context.buffer[23] = 0;
-	context.buffer[24] = 0;
-	context.buffer[25] = 0;
-	context.buffer[26] = 0;
-	context.buffer[27] = 0;
-	context.buffer[28] = 0;
-	context.buffer[29] = 0;
-	context.buffer[30] = 0;
-	context.buffer[31] = 0;
-	context.buffer[32] = 0;
-	context.buffer[33] = 0;
-	context.buffer[34] = 0;
-	context.buffer[35] = 0;
-	context.buffer[36] = 0;
-	context.buffer[37] = 0;
-	context.buffer[38] = 0;
-	context.buffer[39] = 0;
-	context.buffer[40] = 0;
-	context.buffer[41] = 0;
-	context.buffer[42] = 0;
-	context.buffer[43] = 0;
-	context.buffer[44] = 0;
-	context.buffer[45] = 0;
-	context.buffer[46] = 0;
-	context.buffer[47] = 0;
-	context.buffer[48] = 0;
-	context.buffer[49] = 0;
-	context.buffer[50] = 0;
-	context.buffer[51] = 0;
-	context.buffer[52] = 0;
-	context.buffer[53] = 0;
-	context.buffer[54] = 0;
-	context.buffer[55] = 0;
-	context.buffer[56] = 0;
-	context.buffer[57] = 0;
-	context.buffer[58] = 0;
-	context.buffer[59] = 0;
-	context.buffer[60] = 0;
-	context.buffer[61] = 0;
-	context.buffer[62] = 0;
-	context.buffer[63] = 0;
 }
