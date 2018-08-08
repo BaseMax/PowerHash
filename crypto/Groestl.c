@@ -16,7 +16,6 @@
   (ROTL32(a,24) & li_32(FF00FF00)))
 
 typedef unsigned char BitSequence;
-typedef unsigned long long DataLength;
 typedef struct
 {
 	uint32_t chaining[16];
