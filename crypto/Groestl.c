@@ -327,21 +327,130 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	RND512P((uint8_t * ) y,z,0x00000007);
 	RND512P((uint8_t * ) z,y,0x00000008);
 	RND512P((uint8_t * ) y,temp,0x00000009);
-	for(k = 0; k < 16; k++)
-	{
-		context.chaining[k] ^= temp[k];
-	}
+	////////////////////////
+	context.chaining[0] ^= temp[0];
+	context.chaining[1] ^= temp[1];
+	context.chaining[2] ^= temp[2];
+	context.chaining[3] ^= temp[3];
+	context.chaining[4] ^= temp[4];
+	context.chaining[5] ^= temp[5];
+	context.chaining[6] ^= temp[6];
+	context.chaining[7] ^= temp[7];
+	context.chaining[8] ^= temp[8];
+	context.chaining[9] ^= temp[9];
+	context.chaining[10] ^= temp[10];
+	context.chaining[11] ^= temp[11];
+	context.chaining[12] ^= temp[12];
+	context.chaining[13] ^= temp[13];
+	context.chaining[14] ^= temp[14];
+	context.chaining[15] ^= temp[15];
+	////////////////////////
 	//for(i = SIZE512 - hashbytelen; i < SIZE512; i++,j++)
-	for(i = 32; i < SIZE512; i++,j++)
-	{
-		hashval[j] = s[i];
-	}
-	for(i = 0; i < COLS512; i++)
-	{
-		context.chaining[i] = 0;
-	}
-	for(i = 0; i < SIZE512; i++)
-	{
-		context.buffer[i] = 0;
-	}
+	//for(i = 32; i < SIZE512; i++,j++)
+	hashval[0] = s[32];
+	hashval[1] = s[33];
+	hashval[2] = s[34];
+	hashval[3] = s[35];
+	hashval[4] = s[36];
+	hashval[5] = s[37];
+	hashval[6] = s[38];
+	hashval[7] = s[39];
+	hashval[8] = s[40];
+	hashval[9] = s[41];
+	hashval[10] = s[42];
+	hashval[11] = s[43];
+	hashval[12] = s[44];
+	hashval[13] = s[45];
+	hashval[14] = s[46];
+	hashval[15] = s[47];
+	hashval[16] = s[48];
+	hashval[17] = s[49];
+	hashval[18] = s[50];
+	hashval[19] = s[51];
+	hashval[20] = s[52];
+	hashval[21] = s[53];
+	hashval[22] = s[54];
+	hashval[23] = s[55];
+	hashval[24] = s[56];
+	hashval[25] = s[57];
+	hashval[26] = s[58];
+	hashval[27] = s[59];
+	hashval[28] = s[60];
+	hashval[29] = s[61];
+	hashval[30] = s[62];
+	hashval[31] = s[63];
+	////////////////////////
+	context.chaining[0] = 0;
+	context.chaining[1] = 0;
+	context.chaining[2] = 0;
+	context.chaining[3] = 0;
+	context.chaining[4] = 0;
+	context.chaining[5] = 0;
+	context.chaining[6] = 0;
+	context.chaining[7] = 0;
+	////////////////////////
+	context.buffer[0] = 0;
+	context.buffer[1] = 0;
+	context.buffer[2] = 0;
+	context.buffer[3] = 0;
+	context.buffer[4] = 0;
+	context.buffer[5] = 0;
+	context.buffer[6] = 0;
+	context.buffer[7] = 0;
+	context.buffer[8] = 0;
+	context.buffer[9] = 0;
+	context.buffer[10] = 0;
+	context.buffer[11] = 0;
+	context.buffer[12] = 0;
+	context.buffer[13] = 0;
+	context.buffer[14] = 0;
+	context.buffer[15] = 0;
+	context.buffer[16] = 0;
+	context.buffer[17] = 0;
+	context.buffer[18] = 0;
+	context.buffer[19] = 0;
+	context.buffer[20] = 0;
+	context.buffer[21] = 0;
+	context.buffer[22] = 0;
+	context.buffer[23] = 0;
+	context.buffer[24] = 0;
+	context.buffer[25] = 0;
+	context.buffer[26] = 0;
+	context.buffer[27] = 0;
+	context.buffer[28] = 0;
+	context.buffer[29] = 0;
+	context.buffer[30] = 0;
+	context.buffer[31] = 0;
+	context.buffer[32] = 0;
+	context.buffer[33] = 0;
+	context.buffer[34] = 0;
+	context.buffer[35] = 0;
+	context.buffer[36] = 0;
+	context.buffer[37] = 0;
+	context.buffer[38] = 0;
+	context.buffer[39] = 0;
+	context.buffer[40] = 0;
+	context.buffer[41] = 0;
+	context.buffer[42] = 0;
+	context.buffer[43] = 0;
+	context.buffer[44] = 0;
+	context.buffer[45] = 0;
+	context.buffer[46] = 0;
+	context.buffer[47] = 0;
+	context.buffer[48] = 0;
+	context.buffer[49] = 0;
+	context.buffer[50] = 0;
+	context.buffer[51] = 0;
+	context.buffer[52] = 0;
+	context.buffer[53] = 0;
+	context.buffer[54] = 0;
+	context.buffer[55] = 0;
+	context.buffer[56] = 0;
+	context.buffer[57] = 0;
+	context.buffer[58] = 0;
+	context.buffer[59] = 0;
+	context.buffer[60] = 0;
+	context.buffer[61] = 0;
+	context.buffer[62] = 0;
+	context.buffer[63] = 0;
 }
