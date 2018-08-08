@@ -13,34 +13,34 @@
 #include <stdint.h>
 
 #ifndef RETURN_VALUES
-#  define RETURN_VALUES
-#  if defined( DLL_EXPORT )
-#    if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
-#      define VOID_RETURN    __declspec( dllexport ) void __stdcall
-#      define INT_RETURN     __declspec( dllexport ) int  __stdcall
-#    elif defined( __GNUC__ )
-#      define VOID_RETURN    __declspec( __dllexport__ ) void
-#      define INT_RETURN     __declspec( __dllexport__ ) int
-#    else
-#      error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
-#    endif
-#  elif defined( DLL_IMPORT )
-#    if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
-#      define VOID_RETURN    __declspec( dllimport ) void __stdcall
-#      define INT_RETURN     __declspec( dllimport ) int  __stdcall
-#    elif defined( __GNUC__ )
-#      define VOID_RETURN    __declspec( __dllimport__ ) void
-#      define INT_RETURN     __declspec( __dllimport__ ) int
-#    else
-#      error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
-#    endif
-#  elif defined( __WATCOMC__ )
-#    define VOID_RETURN  void __cdecl
-#    define INT_RETURN   int  __cdecl
-#  else
-#    define VOID_RETURN  void
-#    define INT_RETURN   int
-#  endif
+#	define RETURN_VALUES
+#	if defined( DLL_EXPORT )
+#		if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
+#			define VOID_RETURN    __declspec( dllexport ) void __stdcall
+#			define INT_RETURN     __declspec( dllexport ) int  __stdcall
+#		elif defined( __GNUC__ )
+#			define VOID_RETURN    __declspec( __dllexport__ ) void
+#			define INT_RETURN     __declspec( __dllexport__ ) int
+#		else
+#			error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
+#		endif
+#	elif defined( DLL_IMPORT )
+#		if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
+#			define VOID_RETURN    __declspec( dllimport ) void __stdcall
+#			define INT_RETURN     __declspec( dllimport ) int  __stdcall
+#		elif defined( __GNUC__ )
+#			define VOID_RETURN    __declspec( __dllimport__ ) void
+#			define INT_RETURN     __declspec( __dllimport__ ) int
+#		else
+#			error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
+#		endif
+#	elif defined( __WATCOMC__ )
+#		define VOID_RETURN  void __cdecl
+#		define INT_RETURN   int  __cdecl
+#	else
+#		define VOID_RETURN  void
+#		define INT_RETURN   int
+#	endif
 #endif
 #define ui_type(size)               uint##size##_t
 #define dec_unit_type(size,x)       typedef ui_type(size) x
@@ -156,25 +156,25 @@ static inline uint32_t div128_32(uint64_t dividend_hi, uint64_t dividend_lo, uin
 static inline uint32_t ident32(uint32_t x) { return x; }
 static inline uint64_t ident64(uint64_t x) { return x; }
 #ifndef __OpenBSD__
-#  if defined(__ANDROID__) && defined(__swap32) && !defined(swap32)
-#      define swap32 __swap32
-#  elif !defined(swap32)
+#	if defined(__ANDROID__) && defined(__swap32) && !defined(swap32)
+#			define swap32 __swap32
+#	elif !defined(swap32)
 static inline uint32_t swap32(uint32_t x)
 {
 	x = ((x & 0x00ff00ff) << 8) | ((x & 0xff00ff00) >> 8);
 	return (x << 16) | (x >> 16);
 }
-#  endif
-#  if defined(__ANDROID__) && defined(__swap64) && !defined(swap64)
-#      define swap64 __swap64
-#  elif !defined(swap64)
+#	endif
+#	if defined(__ANDROID__) && defined(__swap64) && !defined(swap64)
+#			define swap64 __swap64
+#	elif !defined(swap64)
 static inline uint64_t swap64(uint64_t x)
 {
 	x = ((x & 0x00ff00ff00ff00ff) <<  8) | ((x & 0xff00ff00ff00ff00) >>  8);
 	x = ((x & 0x0000ffff0000ffff) << 16) | ((x & 0xffff0000ffff0000) >> 16);
 	return (x << 32) | (x >> 32);
 }
-#  endif
+#	endif
 #endif
 #if defined(__GNUC__)
 	#define UNUSED __attribute__((unused))
