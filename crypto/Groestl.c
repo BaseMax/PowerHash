@@ -22,7 +22,8 @@ typedef unsigned char BitSequence;
 typedef unsigned long long DataLength;
 typedef struct
 {
-	uint32_t chaining[SIZE512/sizeof(uint32_t)];
+	//uint32_t chaining[SIZE512/sizeof(uint32_t)];
+	uint32_t chaining[16];
 	uint32_t block_counter1,
 	block_counter2;
 	BitSequence buffer[SIZE512];
@@ -240,7 +241,7 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 {
 	DataLength databitlen=1600;
 	hashState context;
-	for(size_t i = 0; i < (SIZE512 / sizeof(uint32_t)); i++)
+	for(size_t i = 0; i < (16); i++)
 	{
 		context.chaining[i] = 0;
 	}
