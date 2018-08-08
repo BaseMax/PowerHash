@@ -313,10 +313,24 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	uint32_t temp[16];
 	uint32_t y[16];
 	uint32_t z[16];
-	for(k = 0; k < 16; k++)
-	{
-		temp[k] = context.chaining[k];
-	}
+	//for(k = 14; k < 16; k++)
+	temp[0] = context.chaining[0];
+	temp[1] = context.chaining[1];
+	temp[2] = context.chaining[2];
+	temp[3] = context.chaining[3];
+	temp[4] = context.chaining[4];
+	temp[5] = context.chaining[5];
+	temp[6] = context.chaining[6];
+	temp[7] = context.chaining[7];
+	temp[8] = context.chaining[8];
+	temp[9] = context.chaining[9];
+	temp[10] = context.chaining[10];
+	temp[11] = context.chaining[11];
+	temp[12] = context.chaining[12];
+	temp[13] = context.chaining[13];
+	temp[14] = context.chaining[14];
+	temp[15] = context.chaining[15];
+	////////////////////////
 	RND512P((uint8_t * ) temp,y,0x00000000);
 	RND512P((uint8_t * ) y,z,0x00000001);
 	RND512P((uint8_t * ) z,y,0x00000002);
