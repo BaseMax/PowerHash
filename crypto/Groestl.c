@@ -296,10 +296,9 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 		context.buffer[(int) context.buf_ptr++] = 0;
 	}
 	context.block_counter1++;
-	if(context.block_counter1 == 0)
-		context.block_counter2++;
 	context.buf_ptr = SIZE512;
-	while(context.buf_ptr > SIZE512 - (int) sizeof(uint32_t))
+	//while(context.buf_ptr > SIZE512 - (int) sizeof(uint32_t))
+	while(context.buf_ptr > 60)
 	{
 		context.buffer[(int) --context.buf_ptr] = (uint8_t) context.block_counter1;
 		context.block_counter1 >>= 8;
@@ -307,7 +306,6 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	while(context.buf_ptr > 56)
 	{
 		context.buffer[(int) --context.buf_ptr] = (uint8_t) context.block_counter2;
-		context.block_counter2 >>= 8;
 	}
 	Transform(&context,context.buffer,SIZE512);
 	int k;
