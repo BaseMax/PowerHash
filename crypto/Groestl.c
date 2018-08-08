@@ -158,42 +158,6 @@ static void RND512Q(uint8_t * x,uint32_t * y,uint32_t r)
 	COLUMN(x,y,12,14,2,6,10,13,1,5,9,temp_v1,temp_v2,temp_upper_value,temp_lower_value,temp);
 	COLUMN(x,y,14,0,4,8,12,15,3,7,11,temp_v1,temp_v2,temp_upper_value,temp_lower_value,temp);
 }
-static void F512(uint32_t * h,const uint32_t * m)
-{
-	int i;
-	uint32_t Ptmp[16];
-	uint32_t Qtmp[16];
-	uint32_t y[16];
-	uint32_t z[16];
-	for(i = 0; i < 16; i++) {
-	z[i] = m[i];
-	Ptmp[i] = h[i] ^ m[i];
-	}
-	RND512Q((uint8_t * ) z,y,0x00000000);
-	RND512Q((uint8_t * ) y,z,0x01000000);
-	RND512Q((uint8_t * ) z,y,0x02000000);
-	RND512Q((uint8_t * ) y,z,0x03000000);
-	RND512Q((uint8_t * ) z,y,0x04000000);
-	RND512Q((uint8_t * ) y,z,0x05000000);
-	RND512Q((uint8_t * ) z,y,0x06000000);
-	RND512Q((uint8_t * ) y,z,0x07000000);
-	RND512Q((uint8_t * ) z,y,0x08000000);
-	RND512Q((uint8_t * ) y,Qtmp,0x09000000);
-	RND512P((uint8_t * ) Ptmp,y,0x00000000);
-	RND512P((uint8_t * ) y,z,0x00000001);
-	RND512P((uint8_t * ) z,y,0x00000002);
-	RND512P((uint8_t * ) y,z,0x00000003);
-	RND512P((uint8_t * ) z,y,0x00000004);
-	RND512P((uint8_t * ) y,z,0x00000005);
-	RND512P((uint8_t * ) z,y,0x00000006);
-	RND512P((uint8_t * ) y,z,0x00000007);
-	RND512P((uint8_t * ) z,y,0x00000008);
-	RND512P((uint8_t * ) y,Ptmp,0x00000009);
-	for(i = 0; i < 16; i++)
-	{
-		h[i] ^= Ptmp[i] ^ Qtmp[i];
-	}
-}
 static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 {
 	for(; msglen >= SIZE512; msglen -= SIZE512,input += SIZE512)
@@ -203,11 +167,40 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 		uint32_t Qtmp[16];
 		uint32_t y[16];
 		uint32_t z[16];
-		for(i = 0; i < 16; i++)
-		{
-			z[i] = ((uint32_t * ) input)[i];
-			Ptmp[i] = ctx->chaining[i] ^ ((uint32_t * ) input)[i];
-		}
+		//for(i = 0; i < 16; i++)
+		z[0] = ((uint32_t * ) input)[0];
+		Ptmp[0] = ctx->chaining[0] ^ ((uint32_t * ) input)[0];
+		z[1] = ((uint32_t * ) input)[1];
+		Ptmp[1] = ctx->chaining[1] ^ ((uint32_t * ) input)[1];
+		z[2] = ((uint32_t * ) input)[2];
+		Ptmp[2] = ctx->chaining[2] ^ ((uint32_t * ) input)[2];
+		z[3] = ((uint32_t * ) input)[3];
+		Ptmp[3] = ctx->chaining[3] ^ ((uint32_t * ) input)[3];
+		z[4] = ((uint32_t * ) input)[4];
+		Ptmp[4] = ctx->chaining[4] ^ ((uint32_t * ) input)[4];
+		z[5] = ((uint32_t * ) input)[5];
+		Ptmp[5] = ctx->chaining[5] ^ ((uint32_t * ) input)[5];
+		z[6] = ((uint32_t * ) input)[6];
+		Ptmp[6] = ctx->chaining[6] ^ ((uint32_t * ) input)[6];
+		z[7] = ((uint32_t * ) input)[7];
+		Ptmp[7] = ctx->chaining[7] ^ ((uint32_t * ) input)[7];
+		z[8] = ((uint32_t * ) input)[8];
+		Ptmp[8] = ctx->chaining[8] ^ ((uint32_t * ) input)[8];
+		z[9] = ((uint32_t * ) input)[9];
+		Ptmp[9] = ctx->chaining[9] ^ ((uint32_t * ) input)[9];
+		z[10] = ((uint32_t * ) input)[10];
+		Ptmp[10] = ctx->chaining[10] ^ ((uint32_t * ) input)[10];
+		z[11] = ((uint32_t * ) input)[11];
+		Ptmp[11] = ctx->chaining[11] ^ ((uint32_t * ) input)[11];
+		z[12] = ((uint32_t * ) input)[12];
+		Ptmp[12] = ctx->chaining[12] ^ ((uint32_t * ) input)[12];
+		z[13] = ((uint32_t * ) input)[13];
+		Ptmp[13] = ctx->chaining[13] ^ ((uint32_t * ) input)[13];
+		z[14] = ((uint32_t * ) input)[14];
+		Ptmp[14] = ctx->chaining[14] ^ ((uint32_t * ) input)[14];
+		z[15] = ((uint32_t * ) input)[15];
+		Ptmp[15] = ctx->chaining[15] ^ ((uint32_t * ) input)[15];
+		////////////////////////////////////
 		RND512Q((uint8_t * ) z,y,0x00000000);
 		RND512Q((uint8_t * ) y,z,0x01000000);
 		RND512Q((uint8_t * ) z,y,0x02000000);
@@ -228,23 +221,48 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 		RND512P((uint8_t * ) y,z,0x00000007);
 		RND512P((uint8_t * ) z,y,0x00000008);
 		RND512P((uint8_t * ) y,Ptmp,0x00000009);
-		for(i = 0; i < 16; i++)
-		{
-			ctx->chaining[i] ^= Ptmp[i] ^ Qtmp[i];
-		}
+		//for(i = 0; i < 16; i++)
+		ctx->chaining[0] ^= Ptmp[0] ^ Qtmp[0];
+		ctx->chaining[1] ^= Ptmp[1] ^ Qtmp[1];
+		ctx->chaining[2] ^= Ptmp[2] ^ Qtmp[2];
+		ctx->chaining[3] ^= Ptmp[3] ^ Qtmp[3];
+		ctx->chaining[4] ^= Ptmp[4] ^ Qtmp[4];
+		ctx->chaining[5] ^= Ptmp[5] ^ Qtmp[5];
+		ctx->chaining[6] ^= Ptmp[6] ^ Qtmp[6];
+		ctx->chaining[7] ^= Ptmp[7] ^ Qtmp[7];
+		ctx->chaining[8] ^= Ptmp[8] ^ Qtmp[8];
+		ctx->chaining[9] ^= Ptmp[9] ^ Qtmp[9];
+		ctx->chaining[10] ^= Ptmp[10] ^ Qtmp[10];
+		ctx->chaining[11] ^= Ptmp[11] ^ Qtmp[11];
+		ctx->chaining[12] ^= Ptmp[12] ^ Qtmp[12];
+		ctx->chaining[13] ^= Ptmp[13] ^ Qtmp[13];
+		ctx->chaining[14] ^= Ptmp[14] ^ Qtmp[14];
+		ctx->chaining[15] ^= Ptmp[15] ^ Qtmp[15];
+		///////////////////////////////////////
 		ctx->block_counter1++;
-		if(ctx->block_counter1 == 0)
-			ctx->block_counter2++;
 	}
 }
 void groestl(const BitSequence * data,BitSequence * hashval)
 {
-	DataLength databitlen=1600;
 	hashState context;
-	for(size_t i = 0; i < (16); i++)
-	{
-		context.chaining[i] = 0;
-	}
+	//for(size_t i = 0; i < (16); i++)
+	context.chaining[0] = 0;
+	context.chaining[1] = 0;
+	context.chaining[2] = 0;
+	context.chaining[3] = 0;
+	context.chaining[4] = 0;
+	context.chaining[5] = 0;
+	context.chaining[6] = 0;
+	context.chaining[7] = 0;
+	context.chaining[8] = 0;
+	context.chaining[9] = 0;
+	context.chaining[10] = 0;
+	context.chaining[11] = 0;
+	context.chaining[12] = 0;
+	context.chaining[13] = 0;
+	context.chaining[14] = 0;
+	//context.chaining[15] = 0;
+	/////////////
 	context.chaining[15] = u32BIG((uint32_t) 256);
 	context.buf_ptr = 0;
 	context.block_counter1 = 0;
@@ -253,22 +271,9 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	int index = 0;
 	int msglen = 200;
 	int rem = 0;
-	if(context.buf_ptr)
-	{
-		//while(context.buf_ptr < SIZE512 && index < msglen)
-		while(context.buf_ptr < SIZE512 && index < 200)
-		{
-			context.buffer[(int) context.buf_ptr++] = data[index++];
-		}
-		if(context.buf_ptr < SIZE512)
-		{
-			return;
-		}
-		context.buf_ptr = 0;
-		Transform( & context,context.buffer,SIZE512);
-	}
 	Transform( & context,data + index,msglen - index);
-	index += ((msglen - index) / SIZE512) * SIZE512;
+	//index += ((msglen - index) / SIZE512) * SIZE512;
+	index += 192;
 	while(index < msglen)
 	{
 		context.buffer[(int) context.buf_ptr++] = data[index++];
@@ -313,7 +318,7 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	uint32_t temp[16];
 	uint32_t y[16];
 	uint32_t z[16];
-	//for(k = 0; k < 16; k++)
+	//for(k = 14; k < 16; k++)
 	temp[0] = context.chaining[0];
 	temp[1] = context.chaining[1];
 	temp[2] = context.chaining[2];
