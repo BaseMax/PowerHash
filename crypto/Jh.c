@@ -1,7 +1,7 @@
 /* 
  *
  * Jh.c
- * Author: Curie Kief , Base Max , Thomas Krinninger , Soeren S. Thomsen and Krystian Matusiewicz
+ * Author: Curie Kief , Base Max
  * Purpose of review and rewrite is optimization.
  *
  */
