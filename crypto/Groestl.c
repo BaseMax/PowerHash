@@ -156,7 +156,6 @@ static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 {
 	for(; msglen >= 64; msglen -= 64,input += 64)
 	{
-		int i;
 		uint32_t Ptmp[16];
 		uint32_t Qtmp[16];
 		uint32_t y[16];
