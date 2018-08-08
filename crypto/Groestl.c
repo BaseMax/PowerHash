@@ -9,12 +9,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#define COLS512 8
-#define SIZE512 64
-#define SIZE_NEW 56
 #define ROTL32(v, n) ((((v)<<(n))|((v)>>(32-(n))))&li_32(ffffffff))
 #define li_32(h) 0x##h##u
-#define EXT_BYTE(var,n) ((uint8_t)((uint32_t)(var) >> (8*n)))
 #define u32BIG(a)\
   ((ROTL32(a,8) & li_32(00FF00FF)) |\
   (ROTL32(a,24) & li_32(FF00FF00)))
@@ -23,9 +19,9 @@ typedef unsigned char BitSequence;
 typedef unsigned long long DataLength;
 typedef struct
 {
-	//uint32_t chaining[SIZE512/sizeof(uint32_t)];
+	//uint32_t chaining[64/sizeof(uint32_t)];
 	uint32_t chaining[16];
-	BitSequence buffer[SIZE512];
+	BitSequence buffer[64];
 	int buf_ptr;
 } hashState;
 
@@ -158,7 +154,7 @@ static void RND512Q(uint8_t * x,uint32_t * y,uint32_t r)
 }
 static void Transform(hashState * ctx,const uint8_t * input,int msglen)
 {
-	for(; msglen >= SIZE512; msglen -= SIZE512,input += SIZE512)
+	for(; msglen >= 64; msglen -= 64,input += 64)
 	{
 		int i;
 		uint32_t Ptmp[16];
@@ -263,11 +259,9 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	context.chaining[15] = u32BIG((uint32_t) 256);
 	context.buf_ptr = 0;
 	//int index = 0;
-	int msglen = 200;
-	int rem = 0;
 	//Transform( & context,data + index,msglen - index);
-	Transform(&context,data,msglen);
-	//index += ((msglen - index) / SIZE512) * SIZE512;
+	Transform(&context,data,200);
+	//index += ((msglen - index) / 64) * 64;
 	//index += 192;
 	//while(index < msglen)
 	memcpy(context.buffer,data+192,8);
@@ -277,13 +271,13 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	uint8_t * s = (BitSequence * ) context.chaining;
 	//while(context.buf_ptr < 56)
 	memset(context.buffer + 9,0,47);
-	context.buf_ptr = SIZE512;//64
-	//while(context.buf_ptr > SIZE512 - (int) sizeof(uint32_t))
+	context.buf_ptr = 64;//64
+	//while(context.buf_ptr > 64 - (int) sizeof(uint32_t))
 	context.buffer[63] = 4;
 	memset(context.buffer + 60,0,3);
 	context.buf_ptr=60;
 	memset(context.buffer + 56,0,4);
-	Transform(&context,context.buffer,SIZE512);
+	Transform(&context,context.buffer,64);
 	uint32_t temp[16];
 	uint32_t y[16];
 	uint32_t z[16];
@@ -333,8 +327,8 @@ void groestl(const BitSequence * data,BitSequence * hashval)
 	context.chaining[14] ^= temp[14];
 	context.chaining[15] ^= temp[15];
 	////////////////////////
-	//for(i = SIZE512 - hashbytelen; i < SIZE512; i++,j++)
-	//for(i = 32; i < SIZE512; i++,j++)
+	//for(i = 64 - hashbytelen; i < 64; i++,j++)
+	//for(i = 32; i < 64; i++,j++)
 	hashval[0] = s[32];
 	hashval[1] = s[33];
 	hashval[2] = s[34];
