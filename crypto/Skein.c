@@ -1480,26 +1480,6 @@ typedef struct
 		Skein1024_Ctxt_t ctx1024;
 	} u;
 } hashState;
-static HashReturn Init(hashState *state,int hashbitlen)
-{
-	#if SKEIN_256_NIST_MAX_HASHBITS
-		if(hashbitlen <= SKEIN_256_NIST_MAX_HASHBITS)
-		{
-			state->statebits = 64*SKEIN_256_STATE_WORDS;
-			return Skein_256_Init(&state->u.ctx_256,(size_t) hashbitlen);
-		}
-	#endif
-	if(hashbitlen <= SKEIN_512_NIST_MAX_HASHBITS)
-	{
-		state->statebits = 64*SKEIN_512_STATE_WORDS;
-		return Skein_512_Init(&state->u.ctx_512,(size_t) hashbitlen);
-	}
-	else
-	{
-		state->statebits = 64*SKEIN1024_STATE_WORDS;
-		return Skein1024_Init(&state->u.ctx1024,(size_t) hashbitlen);
-	}
-}
 static int Skein_512_Init(Skein_512_Ctxt_t *ctx, size_t hashBitLen)
 {
 	union
