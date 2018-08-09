@@ -9,43 +9,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <limits.h>
 #include <stdint.h>
 
-#ifndef RETURN_VALUES
-#	define RETURN_VALUES
-#	if defined( DLL_EXPORT )
-#		if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
-#			define VOID_RETURN    __declspec( dllexport ) void __stdcall
-#			define INT_RETURN     __declspec( dllexport ) int  __stdcall
-#		elif defined( __GNUC__ )
-#			define VOID_RETURN    __declspec( __dllexport__ ) void
-#			define INT_RETURN     __declspec( __dllexport__ ) int
-#		else
-#			error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
-#		endif
-#	elif defined( DLL_IMPORT )
-#		if defined( _MSC_VER ) || defined ( __INTEL_COMPILER )
-#			define VOID_RETURN    __declspec( dllimport ) void __stdcall
-#			define INT_RETURN     __declspec( dllimport ) int  __stdcall
-#		elif defined( __GNUC__ )
-#			define VOID_RETURN    __declspec( __dllimport__ ) void
-#			define INT_RETURN     __declspec( __dllimport__ ) int
-#		else
-#			error Use of the DLL is only available on the Microsoft, Intel and GCC compilers
-#		endif
-#	elif defined( __WATCOMC__ )
-#		define VOID_RETURN  void __cdecl
-#		define INT_RETURN   int  __cdecl
-#	else
-#		define VOID_RETURN  void
-#		define INT_RETURN   int
-#	endif
-#endif
-#define ui_type(size)               uint##size##_t
-#define dec_unit_type(size,x)       typedef ui_type(size) x
-#define dec_bufr_type(size,bsize,x) typedef ui_type(size) x[bsize / (size >> 3)]
-#define ptr_cast(x,size)            ((ui_type(size)*)(x))
 typedef unsigned int    uint_t;
 typedef uint8_t         u08b_t;
 typedef uint64_t        u64b_t;
@@ -64,7 +29,6 @@ typedef uint64_t        u64b_t;
 
 
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -76,7 +40,6 @@ typedef uint64_t        u64b_t;
 	#include <stdlib.h>
 	static inline uint32_t rol32(uint32_t x, int r)
 	{
-		static_assert(sizeof(uint32_t) == sizeof(unsigned int), "this code assumes 32-bit integers");
 		return _rotl(x, r);
 	}
 	static inline uint64_t rol64(uint64_t x, int r)
@@ -116,7 +79,6 @@ static inline uint64_t mul128(uint64_t multiplier, uint64_t multiplicand, uint64
 	uint64_t product_lo = bd + (adbc << 32);
 	uint64_t product_lo_carry = product_lo < bd ? 1 : 0;
 	*product_hi = ac + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
-	assert(ac <= *product_hi);
 	return product_lo;
 }
 static inline uint64_t div_with_reminder(uint64_t dividend, uint32_t divisor, uint32_t* remainder)
@@ -223,9 +185,6 @@ static inline void memcpy_swap64(void *dst, const void *src, size_t n)
 		((uint64_t *) dst)[i] = swap64(((const uint64_t *) src)[i]);
 	}
 }
-#if !defined(BYTE_ORDER) || !defined(LITTLE_ENDIAN) || !defined(BIG_ENDIAN)
-	static_assert(false, "BYTE_ORDER is undefined. Perhaps, GNU extensions are not enabled");
-#endif
 #if BYTE_ORDER == LITTLE_ENDIAN
 	#define SWAP32LE IDENT32
 	#define SWAP32BE SWAP32
@@ -308,46 +267,46 @@ static inline void memcpy_swap64(void *dst, const void *src, size_t n)
 #if   SKEIN_NEED_SWAP
 #define Skein_Swap64(w64)                       \
   ( (( ((u64b_t)(w64))       & 0xFF) << 56) |   \
-    (((((u64b_t)(w64)) >> 8) & 0xFF) << 48) |   \
-    (((((u64b_t)(w64)) >>16) & 0xFF) << 40) |   \
-    (((((u64b_t)(w64)) >>24) & 0xFF) << 32) |   \
-    (((((u64b_t)(w64)) >>32) & 0xFF) << 24) |   \
-    (((((u64b_t)(w64)) >>40) & 0xFF) << 16) |   \
-    (((((u64b_t)(w64)) >>48) & 0xFF) <<  8) |   \
-    (((((u64b_t)(w64)) >>56) & 0xFF)      ) )
+	(((((u64b_t)(w64)) >> 8) & 0xFF) << 48) |   \
+	(((((u64b_t)(w64)) >>16) & 0xFF) << 40) |   \
+	(((((u64b_t)(w64)) >>24) & 0xFF) << 32) |   \
+	(((((u64b_t)(w64)) >>32) & 0xFF) << 24) |   \
+	(((((u64b_t)(w64)) >>40) & 0xFF) << 16) |   \
+	(((((u64b_t)(w64)) >>48) & 0xFF) <<  8) |   \
+	(((((u64b_t)(w64)) >>56) & 0xFF)      ) )
 #else
 #define Skein_Swap64(w64)  (w64)
 #endif
 #endif
 #ifndef Skein_Put64_LSB_First
-void    Skein_Put64_LSB_First(u08b_t *dst,const u64b_t *src,size_t bCnt)
+void    Skein_Put64_LSB_First(uint8_t *dst,const u64b_t *src,size_t bCnt)
 #ifdef SKEIN_PORT_CODE
-    {
-    size_t n;
-    for(n=0;n<bCnt;n++)
-        dst[n] = (u08b_t) (src[n>>3] >> (8*(n&7)));
-    }
+	{
+	size_t n;
+	for(n=0;n<bCnt;n++)
+		dst[n] = (uint8_t) (src[n>>3] >> (8*(n&7)));
+	}
 #else
-    ;
+	;
 #endif
 #endif
 #ifndef Skein_Get64_LSB_First
-	void    Skein_Get64_LSB_First(u64b_t *dst,const u08b_t *src,size_t wCnt)
+	void    Skein_Get64_LSB_First(u64b_t *dst,const uint8_t *src,size_t wCnt)
 #ifdef SKEIN_PORT_CODE
 {
-    size_t n;
-    for(n=0;n<8*wCnt;n+=8)
-        dst[n/8] = (((u64b_t) src[n  ])      ) +
-                   (((u64b_t) src[n+1]) <<  8) +
-                   (((u64b_t) src[n+2]) << 16) +
-                   (((u64b_t) src[n+3]) << 24) +
-                   (((u64b_t) src[n+4]) << 32) +
-                   (((u64b_t) src[n+5]) << 40) +
-                   (((u64b_t) src[n+6]) << 48) +
-                   (((u64b_t) src[n+7]) << 56) ;
-    }
+	size_t n;
+	for(n=0;n<8*wCnt;n+=8)
+		dst[n/8] = (((u64b_t) src[n  ])      ) +
+				   (((u64b_t) src[n+1]) <<  8) +
+				   (((u64b_t) src[n+2]) << 16) +
+				   (((u64b_t) src[n+3]) << 24) +
+				   (((u64b_t) src[n+4]) << 32) +
+				   (((u64b_t) src[n+5]) << 40) +
+				   (((u64b_t) src[n+6]) << 48) +
+				   (((u64b_t) src[n+7]) << 56) ;
+	}
 #else
-    ;
+	;
 #endif
 #endif
 
@@ -360,8 +319,8 @@ typedef enum
 }
 HashReturn;
 typedef size_t   DataLength;
-typedef u08b_t   BitSequence;
-HashReturn skein_hash(int hashbitlen,const BitSequence *data,DataLength databitlen,BitSequence *hashval);
+typedef uint8_t   BitSequence;
+HashReturn skein_hash(const BitSequence *data,BitSequence *hashval);
 #define DISABLE_UNUSED 0
 #ifndef SKEIN_256_NIST_MAX_HASHBITS
 	#define SKEIN_256_NIST_MAX_HASHBITS (0)
@@ -397,31 +356,31 @@ typedef struct
 {
 	Skein_Ctxt_Hdr_t h;
 	u64b_t X[SKEIN_256_STATE_WORDS];
-	u08b_t  b[SKEIN_256_BLOCK_BYTES];
+	uint8_t  b[SKEIN_256_BLOCK_BYTES];
 } Skein_256_Ctxt_t;
 typedef struct
 {
 	Skein_Ctxt_Hdr_t h;
 	u64b_t X[SKEIN_512_STATE_WORDS];
-	u08b_t  b[SKEIN_512_BLOCK_BYTES];
+	uint8_t  b[SKEIN_512_BLOCK_BYTES];
 } Skein_512_Ctxt_t;
 typedef struct
 {
 	Skein_Ctxt_Hdr_t h;
 	u64b_t X[SKEIN1024_STATE_WORDS];
-	u08b_t  b[SKEIN1024_BLOCK_BYTES];
+	uint8_t  b[SKEIN1024_BLOCK_BYTES];
 } Skein1024_Ctxt_t;
 #if SKEIN_256_NIST_MAX_HASHBITS
 	static int  Skein_256_Init  (Skein_256_Ctxt_t *ctx,size_t hashBitLen);
 #endif
 static int  Skein_512_Init  (Skein_512_Ctxt_t *ctx,size_t hashBitLen);
 static int  Skein1024_Init  (Skein1024_Ctxt_t *ctx,size_t hashBitLen);
-static int  Skein_256_Update(Skein_256_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt);
-static int  Skein_512_Update(Skein_512_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt);
-static int  Skein1024_Update(Skein1024_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt);
-static int  Skein_256_Final (Skein_256_Ctxt_t *ctx,u08b_t * hashVal);
-static int  Skein_512_Final (Skein_512_Ctxt_t *ctx,u08b_t * hashVal);
-static int  Skein1024_Final (Skein1024_Ctxt_t *ctx,u08b_t * hashVal);
+static int  Skein_256_Update(Skein_256_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt);
+static int  Skein_512_Update(Skein_512_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt);
+static int  Skein1024_Update(Skein1024_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt);
+static int  Skein_256_Final (Skein_256_Ctxt_t *ctx,uint8_t * hashVal);
+static int  Skein_512_Final (Skein_512_Ctxt_t *ctx,uint8_t * hashVal);
+static int  Skein1024_Final (Skein1024_Ctxt_t *ctx,uint8_t * hashVal);
 #ifndef SKEIN_TREE_HASH
 	#define SKEIN_TREE_HASH (1)
 #endif
@@ -434,7 +393,6 @@ static int  Skein1024_Final (Skein1024_Ctxt_t *ctx,u08b_t * hashVal);
 #define SKEIN_T1_FLAG_FIRST     (((u64b_t)  1 ) << SKEIN_T1_POS_FIRST)
 #define SKEIN_T1_FLAG_FINAL     (((u64b_t)  1 ) << SKEIN_T1_POS_FINAL)
 #define SKEIN_T1_FLAG_BIT_PAD   (((u64b_t)  1 ) << SKEIN_T1_POS_BIT_PAD)
-#define SKEIN_T1_TREE_LVL_MASK  (((u64b_t)0x7F) << SKEIN_T1_POS_TREE_LVL)
 #define SKEIN_T1_TREE_LEVEL(n)  (((u64b_t) (n)) << SKEIN_T1_POS_TREE_LVL)
 #define SKEIN_BLK_TYPE_KEY      ( 0)
 #define SKEIN_BLK_TYPE_CFG      ( 4)
@@ -499,18 +457,7 @@ static int  Skein1024_Final (Skein1024_Ctxt_t *ctx,u08b_t * hashVal);
 #define Skein_Show_R_Ptr(bits,ctx,r,X_ptr)
 #define Skein_Show_Final(bits,ctx,cnt,outPtr)
 #define Skein_Show_Key(bits,ctx,key,keyBytes)
-#ifndef SKEIN_ERR_CHECK
-	#define Skein_Assert(x,retCode)
-	#define Skein_assert(x)
-#elif defined(SKEIN_ASSERT)
-	#include <assert.h>     
-	#define Skein_Assert(x,retCode) assert(x) 
-	#define Skein_assert(x)         assert(x) 
-#else
-	#include <assert.h>     
-	#define Skein_Assert(x,retCode) { if(!(x)) return retCode; }
-	#define Skein_assert(x)         assert(x)
-#endif
+
 enum    
 {
 	R_256_0_0=14,R_256_0_1=16,
@@ -716,7 +663,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#define DebugSaveTweak(ctx)
 #endif
 #if !(SKEIN_USE_ASM & 256)
-	static void Skein_256_Process_Block(Skein_256_Ctxt_t *ctx,const u08b_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
+	static void Skein_256_Process_Block(Skein_256_Ctxt_t *ctx,const uint8_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
 	{
 		enum
 		{
@@ -744,7 +691,6 @@ const u64b_t SKEIN1024_IV_1024[] =
 			const u64b_t *Xptr[4];
 			Xptr[0] = &X0;  Xptr[1] = &X1;  Xptr[2] = &X2;  Xptr[3] = &X3;
 		#endif
-		Skein_assert(blkCnt != 0);
 		ts[0] = ctx->h.T[0];
 		ts[1] = ctx->h.T[1];
 		do
@@ -870,7 +816,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 		static size_t Skein_256_Process_Block_CodeSize(void)
 		{
-			return ((u08b_t *) Skein_256_Process_Block_CodeSize) - ((u08b_t *) Skein_256_Process_Block);
+			return ((uint8_t *) Skein_256_Process_Block_CodeSize) - ((uint8_t *) Skein_256_Process_Block);
 		}
 		static uint_t Skein_256_Unroll_Cnt(void)
 		{
@@ -879,7 +825,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#endif
 #endif
 #if !(SKEIN_USE_ASM & 512)
-	static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const u08b_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
+	static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
 	{
 		enum
 		{
@@ -908,7 +854,6 @@ const u64b_t SKEIN1024_IV_1024[] =
 				Xptr[0] = &X0;  Xptr[1] = &X1;  Xptr[2] = &X2;  Xptr[3] = &X3;
 				Xptr[4] = &X4;  Xptr[5] = &X5;  Xptr[6] = &X6;  Xptr[7] = &X7;
 		#endif
-			Skein_assert(blkCnt != 0);
 			ts[0] = ctx->h.T[0];
 			ts[1] = ctx->h.T[1];
 			do
@@ -1058,7 +1003,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 		static size_t Skein_512_Process_Block_CodeSize(void)
 		{
-			return ((u08b_t *) Skein_512_Process_Block_CodeSize) - ((u08b_t *) Skein_512_Process_Block);
+			return ((uint8_t *) Skein_512_Process_Block_CodeSize) - ((uint8_t *) Skein_512_Process_Block);
 		}
 		static uint_t Skein_512_Unroll_Cnt(void)
 		{
@@ -1067,7 +1012,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#endif
 #endif
 #if !(SKEIN_USE_ASM & 1024)
-	static void Skein1024_Process_Block(Skein1024_Ctxt_t *ctx,const u08b_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
+	static void Skein1024_Process_Block(Skein1024_Ctxt_t *ctx,const uint8_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
 	{
 		enum
 		{
@@ -1098,7 +1043,6 @@ const u64b_t SKEIN1024_IV_1024[] =
 			Xptr[ 8] = &X08;  Xptr[ 9] = &X09;  Xptr[10] = &X10;  Xptr[11] = &X11;
 			Xptr[12] = &X12;  Xptr[13] = &X13;  Xptr[14] = &X14;  Xptr[15] = &X15;
 		#endif
-			Skein_assert(blkCnt != 0);
 			ts[0] = ctx->h.T[0];
 			ts[1] = ctx->h.T[1];
 			do
@@ -1291,7 +1235,7 @@ const u64b_t SKEIN1024_IV_1024[] =
 	#if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 		static size_t Skein1024_Process_Block_CodeSize(void)
 		{
-			return ((u08b_t *) Skein1024_Process_Block_CodeSize) - ((u08b_t *) Skein1024_Process_Block);
+			return ((uint8_t *) Skein1024_Process_Block_CodeSize) - ((uint8_t *) Skein1024_Process_Block);
 		}
 		static uint_t Skein1024_Unroll_Cnt(void)
 		{
@@ -1299,10 +1243,9 @@ const u64b_t SKEIN1024_IV_1024[] =
 		}
 	#endif
 #endif
-static int Skein_256_Update(Skein_256_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt)
+static int Skein_256_Update(Skein_256_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt)
 {
 	size_t n;
-	Skein_Assert(ctx->h.bCnt <= SKEIN_256_BLOCK_BYTES,SKEIN_FAIL);
 	if(msgByteCnt + ctx->h.bCnt > SKEIN_256_BLOCK_BYTES)
 	{
 		if(ctx->h.bCnt)
@@ -1310,13 +1253,11 @@ static int Skein_256_Update(Skein_256_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			n = SKEIN_256_BLOCK_BYTES - ctx->h.bCnt;
 			if(n)
 			{
-				Skein_assert(n < msgByteCnt);
 				memcpy(&ctx->b[ctx->h.bCnt],msg,n);
 				msgByteCnt  -= n;
 				msg         += n;
 				ctx->h.bCnt += n;
 			}
-			Skein_assert(ctx->h.bCnt == SKEIN_256_BLOCK_BYTES);
 			Skein_256_Process_Block(ctx,ctx->b,1,SKEIN_256_BLOCK_BYTES);
 			ctx->h.bCnt = 0;
 		}
@@ -1327,21 +1268,18 @@ static int Skein_256_Update(Skein_256_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			msgByteCnt -= n * SKEIN_256_BLOCK_BYTES;
 			msg        += n * SKEIN_256_BLOCK_BYTES;
 		}
-		Skein_assert(ctx->h.bCnt == 0);
 	}
 	if(msgByteCnt)
 	{
-		Skein_assert(msgByteCnt + ctx->h.bCnt <= SKEIN_256_BLOCK_BYTES);
 		memcpy(&ctx->b[ctx->h.bCnt],msg,msgByteCnt);
 		ctx->h.bCnt += msgByteCnt;
 	}
 	return SKEIN_SUCCESS;
 }
-static int Skein_256_Final(Skein_256_Ctxt_t *ctx,u08b_t *hashVal)
+static int Skein_256_Final(Skein_256_Ctxt_t *ctx,uint8_t *hashVal)
 {
 	size_t i,n,byteCnt;
 	u64b_t X[SKEIN_256_STATE_WORDS];
-	Skein_Assert(ctx->h.bCnt <= SKEIN_256_BLOCK_BYTES,SKEIN_FAIL);
 	ctx->h.T[1] |= SKEIN_T1_FLAG_FINAL;
 	if(ctx->h.bCnt < SKEIN_256_BLOCK_BYTES)
 		memset(&ctx->b[ctx->h.bCnt],0,SKEIN_256_BLOCK_BYTES - ctx->h.bCnt);
@@ -1366,51 +1304,12 @@ static int Skein_256_Final(Skein_256_Ctxt_t *ctx,u08b_t *hashVal)
 #if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 	static size_t Skein_256_API_CodeSize(void)
 	{
-		return ((u08b_t *) Skein_256_API_CodeSize) - ((u08b_t *) Skein_256_Init);
+		return ((uint8_t *) Skein_256_API_CodeSize) - ((uint8_t *) Skein_256_Init);
 	}
 #endif
-static int Skein_512_Init(Skein_512_Ctxt_t *ctx,size_t hashBitLen)
-{
-	union
-	{
-		u08b_t  b[SKEIN_512_STATE_BYTES];
-		u64b_t w[SKEIN_512_STATE_WORDS];
-	} cfg;
-	Skein_Assert(hashBitLen > 0,SKEIN_BAD_HASHLEN);
-	ctx->h.hashBitLen = hashBitLen;
-	switch(hashBitLen)
-	{
-		#ifndef SKEIN_NO_PRECOMP
-			case 512:
-				memcpy(ctx->X,SKEIN_512_IV_512,sizeof(ctx->X));
-				break;
-			case 384:
-				memcpy(ctx->X,SKEIN_512_IV_384,sizeof(ctx->X));
-				break;
-			case 256:
-				memcpy(ctx->X,SKEIN_512_IV_256,sizeof(ctx->X));
-				break;
-			case 224:
-				memcpy(ctx->X,SKEIN_512_IV_224,sizeof(ctx->X));
-			break;
-		#endif
-		default:
-			Skein_Start_New_Type(ctx,CFG_FINAL);
-			cfg.w[0] = Skein_Swap64(SKEIN_SCHEMA_VER);
-			cfg.w[1] = Skein_Swap64(hashBitLen);
-			cfg.w[2] = Skein_Swap64(SKEIN_CFG_TREE_INFO_SEQUENTIAL);
-			memset(&cfg.w[3],0,sizeof(cfg) - 3*sizeof(cfg.w[0]));
-			memset(ctx->X,0,sizeof(ctx->X));
-			Skein_512_Process_Block(ctx,cfg.b,1,SKEIN_CFG_STR_LEN);
-		break;
-	}
-	Skein_Start_New_Type(ctx,MSG);
-	return SKEIN_SUCCESS;
-}
-static int Skein_512_Update(Skein_512_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt)
+static int Skein_512_Update(Skein_512_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt)
 {
 	size_t n;
-	Skein_Assert(ctx->h.bCnt <= SKEIN_512_BLOCK_BYTES,SKEIN_FAIL);
 	if(msgByteCnt + ctx->h.bCnt > SKEIN_512_BLOCK_BYTES)
 	{
 		if(ctx->h.bCnt)
@@ -1418,13 +1317,11 @@ static int Skein_512_Update(Skein_512_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			n = SKEIN_512_BLOCK_BYTES - ctx->h.bCnt;
 			if(n)
 			{
-				Skein_assert(n < msgByteCnt);
 				memcpy(&ctx->b[ctx->h.bCnt],msg,n);
 				msgByteCnt  -= n;
 				msg         += n;
 				ctx->h.bCnt += n;
 			}
-			Skein_assert(ctx->h.bCnt == SKEIN_512_BLOCK_BYTES);
 			Skein_512_Process_Block(ctx,ctx->b,1,SKEIN_512_BLOCK_BYTES);
 			ctx->h.bCnt = 0;
 		}
@@ -1435,21 +1332,18 @@ static int Skein_512_Update(Skein_512_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			msgByteCnt -= n * SKEIN_512_BLOCK_BYTES;
 			msg        += n * SKEIN_512_BLOCK_BYTES;
 		}
-		Skein_assert(ctx->h.bCnt == 0);
 	}
 	if(msgByteCnt)
 	{
-		Skein_assert(msgByteCnt + ctx->h.bCnt <= SKEIN_512_BLOCK_BYTES);
 		memcpy(&ctx->b[ctx->h.bCnt],msg,msgByteCnt);
 		ctx->h.bCnt += msgByteCnt;
 	}
 	return SKEIN_SUCCESS;
 }
-static int Skein_512_Final(Skein_512_Ctxt_t *ctx,u08b_t *hashVal)
+static int Skein_512_Final(Skein_512_Ctxt_t *ctx,uint8_t *hashVal)
 {
 	size_t i,n,byteCnt;
 	u64b_t X[SKEIN_512_STATE_WORDS];
-	Skein_Assert(ctx->h.bCnt <= SKEIN_512_BLOCK_BYTES,SKEIN_FAIL);
 	ctx->h.T[1] |= SKEIN_T1_FLAG_FINAL;
 	if(ctx->h.bCnt < SKEIN_512_BLOCK_BYTES)
 		memset(&ctx->b[ctx->h.bCnt],0,SKEIN_512_BLOCK_BYTES - ctx->h.bCnt);
@@ -1474,25 +1368,24 @@ static int Skein_512_Final(Skein_512_Ctxt_t *ctx,u08b_t *hashVal)
 #if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 static size_t Skein_512_API_CodeSize(void)
 {
-	return ((u08b_t *) Skein_512_API_CodeSize) - ((u08b_t *) Skein_512_Init);
+	return ((uint8_t *) Skein_512_API_CodeSize) - ((uint8_t *) Skein_512_Init);
 }
 #endif
 static int Skein1024_Init(Skein1024_Ctxt_t *ctx,size_t hashBitLen)
 {
 	union
 	{
-		u08b_t  b[SKEIN1024_STATE_BYTES];
+		uint8_t  b[SKEIN1024_STATE_BYTES];
 		u64b_t w[SKEIN1024_STATE_WORDS];
 	} cfg;
-	Skein_Assert(hashBitLen > 0,SKEIN_BAD_HASHLEN);
 	ctx->h.hashBitLen = hashBitLen;
 	switch(hashBitLen)
 	{
 		#ifndef SKEIN_NO_PRECOMP
-			case  512:
+			case 512:
 				memcpy(ctx->X,SKEIN1024_IV_512 ,sizeof(ctx->X));
 				break;
-			case  384:
+			case 384:
 				memcpy(ctx->X,SKEIN1024_IV_384 ,sizeof(ctx->X));
 				break;
 			case 1024:
@@ -1512,10 +1405,9 @@ static int Skein1024_Init(Skein1024_Ctxt_t *ctx,size_t hashBitLen)
 	Skein_Start_New_Type(ctx,MSG);
 	return SKEIN_SUCCESS;
 }
-static int Skein1024_Update(Skein1024_Ctxt_t *ctx,const u08b_t *msg,size_t msgByteCnt)
+static int Skein1024_Update(Skein1024_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt)
 {
 	size_t n;
-	Skein_Assert(ctx->h.bCnt <= SKEIN1024_BLOCK_BYTES,SKEIN_FAIL);
 	if(msgByteCnt + ctx->h.bCnt > SKEIN1024_BLOCK_BYTES)
 	{
 		if(ctx->h.bCnt)
@@ -1523,13 +1415,11 @@ static int Skein1024_Update(Skein1024_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			n = SKEIN1024_BLOCK_BYTES - ctx->h.bCnt;
 			if(n)
 			{
-				Skein_assert(n < msgByteCnt);
 				memcpy(&ctx->b[ctx->h.bCnt],msg,n);
 				msgByteCnt  -= n;
 				msg         += n;
 				ctx->h.bCnt += n;
 			}
-			Skein_assert(ctx->h.bCnt == SKEIN1024_BLOCK_BYTES);
 			Skein1024_Process_Block(ctx,ctx->b,1,SKEIN1024_BLOCK_BYTES);
 			ctx->h.bCnt = 0;
 		}
@@ -1540,21 +1430,18 @@ static int Skein1024_Update(Skein1024_Ctxt_t *ctx,const u08b_t *msg,size_t msgBy
 			msgByteCnt -= n * SKEIN1024_BLOCK_BYTES;
 			msg        += n * SKEIN1024_BLOCK_BYTES;
 		}
-		Skein_assert(ctx->h.bCnt == 0);
 	}
 	if(msgByteCnt)
 	{
-		Skein_assert(msgByteCnt + ctx->h.bCnt <= SKEIN1024_BLOCK_BYTES);
 		memcpy(&ctx->b[ctx->h.bCnt],msg,msgByteCnt);
 		ctx->h.bCnt += msgByteCnt;
 	}
 	return SKEIN_SUCCESS;
 }
-static int Skein1024_Final(Skein1024_Ctxt_t *ctx,u08b_t *hashVal)
+static int Skein1024_Final(Skein1024_Ctxt_t *ctx,uint8_t *hashVal)
 {
 	size_t i,n,byteCnt;
 	u64b_t X[SKEIN1024_STATE_WORDS];
-	Skein_Assert(ctx->h.bCnt <= SKEIN1024_BLOCK_BYTES,SKEIN_FAIL);
 	ctx->h.T[1] |= SKEIN_T1_FLAG_FINAL;
 	if(ctx->h.bCnt < SKEIN1024_BLOCK_BYTES)
 		memset(&ctx->b[ctx->h.bCnt],0,SKEIN1024_BLOCK_BYTES - ctx->h.bCnt);
@@ -1579,7 +1466,7 @@ static int Skein1024_Final(Skein1024_Ctxt_t *ctx,u08b_t *hashVal)
 #if defined(SKEIN_CODE_SIZE) || defined(SKEIN_PERF)
 	static size_t Skein1024_API_CodeSize(void)
 	{
-		return ((u08b_t *) Skein1024_API_CodeSize) - ((u08b_t *) Skein1024_Init);
+		return ((uint8_t *) Skein1024_API_CodeSize) - ((uint8_t *) Skein1024_Init);
 	}
 #endif
 typedef struct
@@ -1593,15 +1480,11 @@ typedef struct
 		Skein1024_Ctxt_t ctx1024;
 	} u;
 } hashState;
-static HashReturn Init  (hashState *state,int hashbitlen);
-static HashReturn Update(hashState *state,const BitSequence *data,DataLength databitlen);
-static HashReturn Final (hashState *state,BitSequence *hashval);
 static HashReturn Init(hashState *state,int hashbitlen)
 {
 	#if SKEIN_256_NIST_MAX_HASHBITS
 		if(hashbitlen <= SKEIN_256_NIST_MAX_HASHBITS)
 		{
-			Skein_Assert(hashbitlen > 0,BAD_HASHLEN);
 			state->statebits = 64*SKEIN_256_STATE_WORDS;
 			return Skein_256_Init(&state->u.ctx_256,(size_t) hashbitlen);
 		}
@@ -1617,10 +1500,49 @@ static HashReturn Init(hashState *state,int hashbitlen)
 		return Skein1024_Init(&state->u.ctx1024,(size_t) hashbitlen);
 	}
 }
+static int Skein_512_Init(Skein_512_Ctxt_t *ctx, size_t hashBitLen)
+{
+	union
+	{
+		u08b_t  b[SKEIN_512_STATE_BYTES];
+		u64b_t  w[SKEIN_512_STATE_WORDS];
+	} cfg;
+	ctx->h.hashBitLen = hashBitLen;
+	switch (hashBitLen)
+	{
+		#ifndef SKEIN_NO_PRECOMP
+			case 512:
+				memcpy(ctx->X,SKEIN_512_IV_512,sizeof(ctx->X));
+				break;
+			case 384:
+				memcpy(ctx->X,SKEIN_512_IV_384,sizeof(ctx->X));
+				break;
+			case 256:
+				memcpy(ctx->X,SKEIN_512_IV_256,sizeof(ctx->X));
+				break;
+			case 224:
+				memcpy(ctx->X,SKEIN_512_IV_224,sizeof(ctx->X));
+				break;
+		#endif
+		default:
+			Skein_Start_New_Type(ctx,CFG_FINAL);
+			cfg.w[0] = Skein_Swap64(SKEIN_SCHEMA_VER);
+			cfg.w[1] = Skein_Swap64(hashBitLen);
+			cfg.w[2] = Skein_Swap64(SKEIN_CFG_TREE_INFO_SEQUENTIAL);
+			memset(&cfg.w[3],0,sizeof(cfg) - 3*sizeof(cfg.w[0]));
+			memset(ctx->X,0,sizeof(ctx->X));
+			Skein_512_Process_Block(ctx,cfg.b,1,SKEIN_CFG_STR_LEN);
+			break;
+		}
+	Skein_Start_New_Type(ctx,MSG);
+	return SKEIN_SUCCESS;
+}
+
+
+
+
 static HashReturn Update(hashState *state,const BitSequence *data,DataLength databitlen)
 {
-	Skein_Assert((state->u.h.T[1] & SKEIN_T1_FLAG_BIT_PAD) == 0 || databitlen == 0,SKEIN_FAIL);
-	Skein_Assert(state->statebits % 256 == 0 && (state->statebits-256) < 1024,SKEIN_FAIL);
 	if((databitlen & 7) == 0)
 	{
 		switch((state->statebits >> 8) & 3)
@@ -1638,9 +1560,9 @@ static HashReturn Update(hashState *state,const BitSequence *data,DataLength dat
 	else
 	{
 		size_t bCnt = (databitlen >> 3) + 1;
-		u08b_t b,mask;
-		mask = (u08b_t) (1u << (7 - (databitlen & 7)));
-		b    = (u08b_t) ((data[bCnt-1] & (0-mask)) | mask);
+		uint8_t b,mask;
+		mask = (uint8_t) (1u << (7 - (databitlen & 7)));
+		b    = (uint8_t) ((data[bCnt-1] & (0-mask)) | mask);
 		switch((state->statebits >> 8) & 3)
 		{
 			case 2:
@@ -1664,7 +1586,6 @@ static HashReturn Update(hashState *state,const BitSequence *data,DataLength dat
 }
 static HashReturn Final(hashState *state,BitSequence *hashval)
 {
-	Skein_Assert(state->statebits % 256 == 0 && (state->statebits-256) < 1024,FAIL);
 	switch((state->statebits >> 8) & 3)
 	{
 		case 2:
@@ -1677,14 +1598,33 @@ static HashReturn Final(hashState *state,BitSequence *hashval)
 			return SKEIN_FAIL;
 	}
 }
-HashReturn skein_hash(int hashbitlen,const BitSequence *data,DataLength databitlen,BitSequence *hashval)
+HashReturn skein_hash(const BitSequence *data,BitSequence *hashval)
 {
+	DataLength databitlen=1600;
+	int hashbitlen=256;
 	hashState  state;
-	HashReturn r = Init(&state,hashbitlen);
-	if(r == SKEIN_SUCCESS)
+	HashReturn r;
+	//HashReturn r = Init(&state,hashbitlen);
+	#if SKEIN_256_NIST_MAX_HASHBITS
+		if(hashbitlen <= SKEIN_256_NIST_MAX_HASHBITS)
+		{
+			state.statebits = 64*SKEIN_256_STATE_WORDS;
+			r=Skein_256_Init(&state.u.ctx_256,(size_t) hashbitlen);
+		}
+	#else
+	if(hashbitlen <= SKEIN_512_NIST_MAX_HASHBITS)
 	{
-		r = Update(&state,data,databitlen);
-		Final(&state,hashval);
+		state.statebits = 64*SKEIN_512_STATE_WORDS;
+		r=Skein_512_Init(&state.u.ctx_512,(size_t) hashbitlen);
 	}
+	else
+	{
+		state.statebits = 64*SKEIN1024_STATE_WORDS;
+		r=Skein1024_Init(&state.u.ctx1024,(size_t) hashbitlen);
+	}
+	#endif
+	//static int Skein_512_Init(Skein_512_Ctxt_t *ctx,size_t hashBitLen)
+    r = Update(&state,data,databitlen);
+    Final(&state,hashval);
 	return r;
 }
