@@ -5,7 +5,6 @@
  * Purpose of review and rewrite is optimization.
  *
  */
-#define SKEIN_PORT_CODE
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
