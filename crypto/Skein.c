@@ -5,6 +5,7 @@
  * Purpose of review and rewrite is optimization.
  *
  */
+#define SKEIN_PORT_CODE
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
@@ -1515,7 +1516,6 @@ static HashReturn Update(hashState *state,const BitSequence *data,DataLength dat
 		return SKEIN_SUCCESS;
 	}
 }
-//static HashReturn Final(hashState *state,BitSequence *hashval)
 static HashReturn Final(hashState *state,BitSequence *hashval)
 {
 	switch((state->statebits >> 8) & 3)
@@ -1532,20 +1532,10 @@ static HashReturn Final(hashState *state,BitSequence *hashval)
 }
 HashReturn skein_hash(const BitSequence *data,BitSequence *hashval)
 {
-	//DataLength databitlen=1600;
-	//int hashbitlen=256;
 	hashState  state;
 	HashReturn r;
-	//HashReturn r = Init(&state,hashbitlen);
-	//if(hashbitlen <= SKEIN_512_NIST_MAX_HASHBITS)
-	//state.statebits = 64*SKEIN_512_STATE_WORDS;
 	state.statebits = 512;
 	r=Skein_512_Init(&state.u.ctx_512,(size_t) 256);
-	//static int Skein_512_Init(Skein_512_Ctxt_t *ctx,size_t hashBitLen)
-	//r = Update(&state,data,databitlen);
-	//static HashReturn Update(hashState *state,const BitSequence *data,DataLength databitlen)
 	r=Skein_512_Update(&state.u.ctx_512,data,200);
-	//Final(&state,hashval);
 	return Skein_512_Final(&state.u.ctx_512,hashval);
-	//return r;
 }
