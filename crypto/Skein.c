@@ -209,19 +209,6 @@ static inline void memcpy_swap64(void *dst, const void *src, size_t n)
 	#define memcpy_swap64be memcpy_ident64
 	#define memcpy_swap64le memcpy_swap64
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
 #define IS_BIG_ENDIAN      4321
 #define IS_LITTLE_ENDIAN   1234
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -287,10 +274,8 @@ void    Skein_Put64_LSB_First(uint8_t *dst,const u64b_t *src,size_t bCnt)
 					   (((u64b_t) src[n+5]) << 40) +
 					   (((u64b_t) src[n+6]) << 48) +
 					   (((u64b_t) src[n+7]) << 56) ;
-		}
+	}
 #endif
-
-
 typedef enum
 {
 	SKEIN_SUCCESS         =      0,
@@ -301,13 +286,7 @@ HashReturn;
 typedef size_t   DataLength;
 typedef uint8_t   BitSequence;
 HashReturn skein_hash(const BitSequence *data,BitSequence *hashval);
-#define DISABLE_UNUSED 0
-#ifndef SKEIN_256_NIST_MAX_HASHBITS
-	#define SKEIN_256_NIST_MAX_HASHBITS (0)
-#endif
-#ifndef SKEIN_512_NIST_MAX_HASHBITS
-	#define SKEIN_512_NIST_MAX_HASHBITS (512)
-#endif
+#define SKEIN_512_NIST_MAX_HASHBITS (512)
 #define SKEIN_MODIFIER_WORDS  ( 2)
 #define SKEIN_256_STATE_WORDS ( 4)
 #define SKEIN_512_STATE_WORDS ( 8)
@@ -350,9 +329,6 @@ typedef struct
 	u64b_t X[SKEIN1024_STATE_WORDS];
 	uint8_t  b[SKEIN1024_BLOCK_BYTES];
 } Skein1024_Ctxt_t;
-#if SKEIN_256_NIST_MAX_HASHBITS
-	static int  Skein_256_Init  (Skein_256_Ctxt_t *ctx,size_t hashBitLen);
-#endif
 static int  Skein_512_Init  (Skein_512_Ctxt_t *ctx,size_t hashBitLen);
 static int  Skein1024_Init  (Skein1024_Ctxt_t *ctx,size_t hashBitLen);
 static int  Skein_256_Update(Skein_256_Ctxt_t *ctx,const uint8_t *msg,size_t msgByteCnt);
@@ -1557,88 +1533,20 @@ static HashReturn Final(hashState *state,BitSequence *hashval)
 }
 HashReturn skein_hash(const BitSequence *data,BitSequence *hashval)
 {
-	DataLength databitlen=1600;
-	int hashbitlen=256;
+	//DataLength databitlen=1600;
+	//int hashbitlen=256;
 	hashState  state;
 	HashReturn r;
 	//HashReturn r = Init(&state,hashbitlen);
-	#if SKEIN_256_NIST_MAX_HASHBITS
-		if(hashbitlen <= SKEIN_256_NIST_MAX_HASHBITS)
-		{
-			state.statebits = 64*SKEIN_256_STATE_WORDS;
-			r=Skein_256_Init(&state.u.ctx_256,(size_t) hashbitlen);
-		}
-	#else
-		if(hashbitlen <= SKEIN_512_NIST_MAX_HASHBITS)
-		{
-			state.statebits = 64*SKEIN_512_STATE_WORDS;
-			r=Skein_512_Init(&state.u.ctx_512,(size_t) hashbitlen);
-		}
-		else
-		{
-			state.statebits = 64*SKEIN1024_STATE_WORDS;
-			r=Skein1024_Init(&state.u.ctx1024,(size_t) hashbitlen);
-		}
-	#endif
+	//if(hashbitlen <= SKEIN_512_NIST_MAX_HASHBITS)
+	//state.statebits = 64*SKEIN_512_STATE_WORDS;
+	state.statebits = 512;
+	r=Skein_512_Init(&state.u.ctx_512,(size_t) 256);
 	//static int Skein_512_Init(Skein_512_Ctxt_t *ctx,size_t hashBitLen)
 	//r = Update(&state,data,databitlen);
 	//static HashReturn Update(hashState *state,const BitSequence *data,DataLength databitlen)
-	if((databitlen & 7) == 0)
-	{
-		switch((state.statebits >> 8) & 3)
-		{
-			case 2:
-				r=Skein_512_Update(&state.u.ctx_512,data,databitlen >> 3);
-				break;
-			case 1:
-				r=Skein_256_Update(&state.u.ctx_256,data,databitlen >> 3);
-				break;
-			case 0:
-				r=Skein1024_Update(&state.u.ctx1024,data,databitlen >> 3);
-				break;
-			default:
-				r=SKEIN_FAIL;
-				break;
-		}
-	}
-	else
-	{
-		size_t bCnt = (databitlen >> 3) + 1;
-		uint8_t b,mask;
-		mask = (uint8_t) (1u << (7 - (databitlen & 7)));
-		b    = (uint8_t) ((data[bCnt-1] & (0-mask)) | mask);
-		switch((state.statebits >> 8) & 3)
-		{
-			case 2:
-				Skein_512_Update(&state.u.ctx_512,data,bCnt-1);
-				Skein_512_Update(&state.u.ctx_512,&b,1);
-				break;
-			case 1:
-				Skein_256_Update(&state.u.ctx_256,data,bCnt-1);
-				Skein_256_Update(&state.u.ctx_256,&b,1);
-				break;
-			case 0:
-				Skein1024_Update(&state.u.ctx1024,data,bCnt-1);
-				Skein1024_Update(&state.u.ctx1024,&b,1);
-				break;
-			default:
-				r=SKEIN_FAIL;
-				break;
-		}
-		Skein_Set_Bit_Pad_Flag(state.u.h);
-		r=SKEIN_SUCCESS;
-	}
+	r=Skein_512_Update(&state.u.ctx_512,data,200);
 	//Final(&state,hashval);
-	switch((state.statebits >> 8) & 3)
-	{
-		case 2:
-			return Skein_512_Final(&state.u.ctx_512,hashval);
-		case 1:
-			return Skein_256_Final(&state.u.ctx_256,hashval);
-		case 0:
-			return Skein1024_Final(&state.u.ctx1024,hashval);
-		default:
-			return SKEIN_FAIL;
-	}
-	return r;
+	return Skein_512_Final(&state.u.ctx_512,hashval);
+	//return r;
 }
