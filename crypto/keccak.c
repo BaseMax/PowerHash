@@ -1,8 +1,7 @@
 /* 
  *
  * keccak.c
- * Author : Markku-Juhani , Base Max
- * Purpose of review and rewrite is optimization. (https://github.com/BaseMax/)
+ * Author : Markku-Juhani
  * Copyright (c) 2011, Markku-Juhani O. Saarinen <mjos@iki.fi>
  * A baseline Keccak (3rd round) implementation.
  *
