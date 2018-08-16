@@ -180,14 +180,6 @@ typedef struct
 #endif
 #define SKEIN_MK_64(hi32,lo32)  ((lo32) + (((u64b_t) (hi32)) << 32))
 #define SKEIN_KS_PARITY         SKEIN_MK_64(0x1BD11BDA,0xA9FC1A22)
-#define SKEIN_CFG_TREE_LEAF_SIZE_POS  (0)
-#define SKEIN_CFG_TREE_NODE_SIZE_POS  (8)
-#define SKEIN_CFG_TREE_MAX_LEVEL_POS  (16)
-#define SKEIN_CFG_TREE_INFO(leaf,node,maxLvl)                   \
-	((((u64b_t)(leaf  )) << SKEIN_CFG_TREE_LEAF_SIZE_POS) |    \
-	(((u64b_t)(node  )) << SKEIN_CFG_TREE_NODE_SIZE_POS) |    \
-	(((u64b_t)(maxLvl)) << SKEIN_CFG_TREE_MAX_LEVEL_POS) )
-#define Skein_Get_Tweak2(ctxPtr,TWK_NUM)        ((ctxPtr).h.T[TWK_NUM])
 #define Skein_Set_Tweak(ctxPtr,TWK_NUM,tVal)    {(ctxPtr)->h.T[TWK_NUM] = (tVal);}
 #define Skein_Set_T0(ctxPtr,T0) Skein_Set_Tweak(ctxPtr,0,T0)
 #define Skein_Set_T1(ctxPtr,T1) Skein_Set_Tweak(ctxPtr,1,T1)
@@ -196,8 +188,6 @@ typedef struct
 	Skein_Set_T0(ctxPtr,(T0));                  \
 	Skein_Set_T1(ctxPtr,(T1));                  \
 }
-#define Skein_Set_Type(ctxPtr,BLK_TYPE)         \
-	Skein_Set_T1(ctxPtr,SKEIN_T1_BLK_TYPE_##BLK_TYPE)
 #define Skein_Start_New_Type(ctxPtr,BLK_TYPE)   \
 { Skein_Set_T0_T1(ctxPtr,0,SKEIN_T1_FLAG_FIRST | SKEIN_T1_BLK_TYPE_##BLK_TYPE); (ctxPtr)->h.bCnt=0; }
 
