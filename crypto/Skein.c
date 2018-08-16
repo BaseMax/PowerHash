@@ -15,241 +15,78 @@ typedef uint64_t        u64b_t;
 #ifndef RotL_64
 	#define RotL_64(x,N)    (((x) << (N)) | ((x) >> (64-(N))))
 #endif
-#ifndef SKEIN_NEED_SWAP
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/param.h>
-#if defined(__ANDROID__)
-	#include <byteswap.h>
-#endif
-#if defined(_MSC_VER)
-	#include <stdlib.h>
-	static inline uint32_t rol32(uint32_t x, int r)
+	#include <stdbool.h>
+	#include <stdint.h>
+	#include <string.h>
+	#include <sys/param.h>
+	#if defined(__ANDROID__)
+		#include <byteswap.h>
+	#endif
+	#if defined(_MSC_VER)
+		#include <stdlib.h>
+		static inline uint32_t rol32(uint32_t x, int r)
+		{
+			return _rotl(x, r);
+		}
+		static inline uint64_t rol64(uint64_t x, int r)
+		{
+			return _rotl64(x, r);
+		}
+	#else
+		static inline uint32_t rol32(uint32_t x, int r)
+		{
+			return (x << (r & 31)) | (x >> (-r & 31));
+		}
+		static inline uint64_t rol64(uint64_t x, int r)
+		{
+			return (x << (r & 63)) | (x >> (-r & 63));
+		}
+	#endif
+	static inline uint64_t hi_dword(uint64_t val)
 	{
-		return _rotl(x, r);
+		return val >> 32;
 	}
-	static inline uint64_t rol64(uint64_t x, int r)
+	static inline uint64_t lo_dword(uint64_t val)
 	{
-		return _rotl64(x, r);
+		return val & 0xFFFFFFFF;
 	}
-#else
-	static inline uint32_t rol32(uint32_t x, int r)
+	static inline uint64_t mul128(uint64_t multiplier, uint64_t multiplicand, uint64_t* product_hi)
 	{
-		return (x << (r & 31)) | (x >> (-r & 31));
+		uint64_t a = hi_dword(multiplier);
+		uint64_t b = lo_dword(multiplier);
+		uint64_t c = hi_dword(multiplicand);
+		uint64_t d = lo_dword(multiplicand);
+		uint64_t ac = a * c;
+		uint64_t ad = a * d;
+		uint64_t bc = b * c;
+		uint64_t bd = b * d;
+		uint64_t adbc = ad + bc;
+		uint64_t adbc_carry = adbc < ad ? 1 : 0;
+		uint64_t product_lo = bd + (adbc << 32);
+		uint64_t product_lo_carry = product_lo < bd ? 1 : 0;
+		*product_hi = ac + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
+		return product_lo;
 	}
-	static inline uint64_t rol64(uint64_t x, int r)
+	static inline uint64_t div_with_reminder(uint64_t dividend, uint32_t divisor, uint32_t* remainder)
 	{
-		return (x << (r & 63)) | (x >> (-r & 63));
+		dividend |= ((uint64_t)*remainder) << 32;
+		*remainder = dividend % divisor;
+		return dividend / divisor;
 	}
-#endif
-static inline uint64_t hi_dword(uint64_t val)
-{
-	return val >> 32;
-}
-static inline uint64_t lo_dword(uint64_t val)
-{
-	return val & 0xFFFFFFFF;
-}
-static inline uint64_t mul128(uint64_t multiplier, uint64_t multiplicand, uint64_t* product_hi)
-{
-	uint64_t a = hi_dword(multiplier);
-	uint64_t b = lo_dword(multiplier);
-	uint64_t c = hi_dword(multiplicand);
-	uint64_t d = lo_dword(multiplicand);
-	uint64_t ac = a * c;
-	uint64_t ad = a * d;
-	uint64_t bc = b * c;
-	uint64_t bd = b * d;
-	uint64_t adbc = ad + bc;
-	uint64_t adbc_carry = adbc < ad ? 1 : 0;
-	uint64_t product_lo = bd + (adbc << 32);
-	uint64_t product_lo_carry = product_lo < bd ? 1 : 0;
-	*product_hi = ac + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
-	return product_lo;
-}
-static inline uint64_t div_with_reminder(uint64_t dividend, uint32_t divisor, uint32_t* remainder)
-{
-	dividend |= ((uint64_t)*remainder) << 32;
-	*remainder = dividend % divisor;
-	return dividend / divisor;
-}
-static inline uint32_t div128_32(uint64_t dividend_hi, uint64_t dividend_lo, uint32_t divisor, uint64_t* quotient_hi, uint64_t* quotient_lo)
-{
-	uint64_t dividend_dwords[4];
-	uint32_t remainder = 0;
-	dividend_dwords[3] = hi_dword(dividend_hi);
-	dividend_dwords[2] = lo_dword(dividend_hi);
-	dividend_dwords[1] = hi_dword(dividend_lo);
-	dividend_dwords[0] = lo_dword(dividend_lo);
-	*quotient_hi  = div_with_reminder(dividend_dwords[3], divisor, &remainder) << 32;
-	*quotient_hi |= div_with_reminder(dividend_dwords[2], divisor, &remainder);
-	*quotient_lo  = div_with_reminder(dividend_dwords[1], divisor, &remainder) << 32;
-	*quotient_lo |= div_with_reminder(dividend_dwords[0], divisor, &remainder);
-	return remainder;
-}
-#define IDENT32(x) ((uint32_t) (x))
-#define IDENT64(x) ((uint64_t) (x))
-#define SWAP32(x) ((((uint32_t) (x) & 0x000000ff) << 24) | \
-  (((uint32_t) (x) & 0x0000ff00) <<  8) | \
-  (((uint32_t) (x) & 0x00ff0000) >>  8) | \
-  (((uint32_t) (x) & 0xff000000) >> 24))
-#define SWAP64(x) ((((uint64_t) (x) & 0x00000000000000ff) << 56) | \
-  (((uint64_t) (x) & 0x000000000000ff00) << 40) | \
-  (((uint64_t) (x) & 0x0000000000ff0000) << 24) | \
-  (((uint64_t) (x) & 0x00000000ff000000) <<  8) | \
-  (((uint64_t) (x) & 0x000000ff00000000) >>  8) | \
-  (((uint64_t) (x) & 0x0000ff0000000000) >> 24) | \
-  (((uint64_t) (x) & 0x00ff000000000000) >> 40) | \
-  (((uint64_t) (x) & 0xff00000000000000) >> 56))
-static inline uint32_t ident32(uint32_t x) { return x; }
-static inline uint64_t ident64(uint64_t x) { return x; }
-#ifndef __OpenBSD__
-#	if defined(__ANDROID__) && defined(__swap32) && !defined(swap32)
-#			define swap32 __swap32
-#	elif !defined(swap32)
-static inline uint32_t swap32(uint32_t x)
-{
-	x = ((x & 0x00ff00ff) << 8) | ((x & 0xff00ff00) >> 8);
-	return (x << 16) | (x >> 16);
-}
-#	endif
-#	if defined(__ANDROID__) && defined(__swap64) && !defined(swap64)
-#			define swap64 __swap64
-#	elif !defined(swap64)
-static inline uint64_t swap64(uint64_t x)
-{
-	x = ((x & 0x00ff00ff00ff00ff) <<  8) | ((x & 0xff00ff00ff00ff00) >>  8);
-	x = ((x & 0x0000ffff0000ffff) << 16) | ((x & 0xffff0000ffff0000) >> 16);
-	return (x << 32) | (x >> 32);
-}
-#	endif
-#endif
-#if defined(__GNUC__)
-	#define UNUSED __attribute__((unused))
-#else
-	#define UNUSED
-#endif
-static inline void mem_inplace_ident(void *mem UNUSED, size_t n UNUSED) { }
-	#undef UNUSED
-static inline void mem_inplace_swap32(void *mem, size_t n)
-{
-	size_t i;
-	for(i = 0; i < n; i++)
+	static inline uint32_t div128_32(uint64_t dividend_hi, uint64_t dividend_lo, uint32_t divisor, uint64_t* quotient_hi, uint64_t* quotient_lo)
 	{
-		((uint32_t *) mem)[i] = swap32(((const uint32_t *) mem)[i]);
+		uint64_t dividend_dwords[4];
+		uint32_t remainder = 0;
+		dividend_dwords[3] = hi_dword(dividend_hi);
+		dividend_dwords[2] = lo_dword(dividend_hi);
+		dividend_dwords[1] = hi_dword(dividend_lo);
+		dividend_dwords[0] = lo_dword(dividend_lo);
+		*quotient_hi  = div_with_reminder(dividend_dwords[3], divisor, &remainder) << 32;
+		*quotient_hi |= div_with_reminder(dividend_dwords[2], divisor, &remainder);
+		*quotient_lo  = div_with_reminder(dividend_dwords[1], divisor, &remainder) << 32;
+		*quotient_lo |= div_with_reminder(dividend_dwords[0], divisor, &remainder);
+		return remainder;
 	}
-}
-static inline void mem_inplace_swap64(void *mem, size_t n)
-{
-	size_t i;
-	for(i = 0; i < n; i++)
-	{
-		((uint64_t *) mem)[i] = swap64(((const uint64_t *) mem)[i]);
-	}
-}
-static inline void memcpy_ident32(void *dst, const void *src, size_t n)
-{
-	memcpy(dst, src, 4 * n);
-}
-static inline void memcpy_ident64(void *dst, const void *src, size_t n)
-{
-	memcpy(dst, src, 8 * n);
-}
-static inline void memcpy_swap32(void *dst, const void *src, size_t n)
-{
-	size_t i;
-	for(i = 0; i < n; i++)
-	{
-		((uint32_t *) dst)[i] = swap32(((const uint32_t *) src)[i]);
-	}
-}
-static inline void memcpy_swap64(void *dst, const void *src, size_t n)
-{
-	size_t i;
-	for(i = 0; i < n; i++)
-	{
-		((uint64_t *) dst)[i] = swap64(((const uint64_t *) src)[i]);
-	}
-}
-#if BYTE_ORDER == LITTLE_ENDIAN
-	#define SWAP32LE IDENT32
-	#define SWAP32BE SWAP32
-	#define swap32le ident32
-	#define swap32be swap32
-	#define mem_inplace_swap32le mem_inplace_ident
-	#define mem_inplace_swap32be mem_inplace_swap32
-	#define memcpy_swap32le memcpy_ident32
-	#define memcpy_swap32be memcpy_swap32
-	#define SWAP64LE IDENT64
-	#define SWAP64BE SWAP64
-	#define swap64le ident64
-	#define swap64be swap64
-	#define mem_inplace_swap64le mem_inplace_ident
-	#define mem_inplace_swap64be mem_inplace_swap64
-	#define memcpy_swap64le memcpy_ident64
-	#define memcpy_swap64be memcpy_swap64
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-	#define SWAP32BE IDENT32
-	#define SWAP32LE SWAP32
-	#define swap32be ident32
-	#define swap32le swap32
-	#define mem_inplace_swap32be mem_inplace_ident
-	#define mem_inplace_swap32le mem_inplace_swap32
-	#define memcpy_swap32be memcpy_ident32
-	#define memcpy_swap32le memcpy_swap32
-	#define SWAP64BE IDENT64
-	#define SWAP64LE SWAP64
-	#define swap64be ident64
-	#define swap64le swap64
-	#define mem_inplace_swap64be mem_inplace_ident
-	#define mem_inplace_swap64le mem_inplace_swap64
-	#define memcpy_swap64be memcpy_ident64
-	#define memcpy_swap64le memcpy_swap64
-#endif
-#define IS_BIG_ENDIAN      4321
-#define IS_LITTLE_ENDIAN   1234
-#if BYTE_ORDER == LITTLE_ENDIAN
-	#define PLATFORM_BYTE_ORDER IS_LITTLE_ENDIAN
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-	#define PLATFORM_BYTE_ORDER IS_BIG_ENDIAN
-#endif
-#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-	#define PLATFORM_MUST_ALIGN (1)
-#ifndef PLATFORM_BYTE_ORDER
-	#define PLATFORM_BYTE_ORDER IS_LITTLE_ENDIAN
-#endif
-#endif
-#ifndef PLATFORM_MUST_ALIGN
-	#define PLATFORM_MUST_ALIGN (0)
-#endif
-#if PLATFORM_BYTE_ORDER == IS_BIG_ENDIAN
-	#define SKEIN_NEED_SWAP   (1)
-#elif PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN
-	#define SKEIN_NEED_SWAP   (0)
-#if PLATFORM_MUST_ALIGN == 0
-	#define Skein_Put64_LSB_First(dst08,src64,bCnt) memcpy(dst08,src64,bCnt)
-	#define Skein_Get64_LSB_First(dst64,src08,wCnt) memcpy(dst64,src08,8*(wCnt))
-#endif
-#else
-	#error "Skein needs endianness setting!"
-#endif
-#endif
-#if SKEIN_NEED_SWAP
-#define Skein_Swap64(w64)                       \
-  (((((u64b_t)(w64))       & 0xFF) << 56) |   \
-	(((((u64b_t)(w64)) >> 8) & 0xFF) << 48) |   \
-	(((((u64b_t)(w64)) >>16) & 0xFF) << 40) |   \
-	(((((u64b_t)(w64)) >>24) & 0xFF) << 32) |   \
-	(((((u64b_t)(w64)) >>32) & 0xFF) << 24) |   \
-	(((((u64b_t)(w64)) >>40) & 0xFF) << 16) |   \
-	(((((u64b_t)(w64)) >>48) & 0xFF) <<  8) |   \
-	(((((u64b_t)(w64)) >>56) & 0xFF)      ) )
-#else
-#define Skein_Swap64(w64)  (w64)
-#endif
 #ifndef Skein_Put64_LSB_First
 void    Skein_Put64_LSB_First(uint8_t *dst,const u64b_t *src,size_t bCnt)
 {
@@ -748,13 +585,48 @@ int skein_hash(const BitSequence *data,BitSequence *hashval)
 	size_t i,byteCnt;
 	u64b_t X[SKEIN_512_STATE_WORDS];
 	ctx->h.T[1] |= SKEIN_T1_FLAG_FINAL;
-	if(ctx->h.bCnt < SKEIN_512_BLOCK_BYTES)
-		memset(&ctx->b[ctx->h.bCnt],0,SKEIN_512_BLOCK_BYTES - ctx->h.bCnt);
+	//if(ctx->h.bCnt < SKEIN_512_BLOCK_BYTES)
+	memset(&ctx->b[ctx->h.bCnt],0,SKEIN_512_BLOCK_BYTES - ctx->h.bCnt);
 	Skein_512_Process_Block(ctx,ctx->b,1,ctx->h.bCnt);
 	memset(ctx->b,0,sizeof(ctx->b));
-	((u64b_t *)ctx->b)[0]= Skein_Swap64((u64b_t) 0);
+	((u64b_t *)ctx->b)[0]= (u64b_t) 0;
 	Skein_Start_New_Type(ctx,OUT_FINAL);
 	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(u64b_t));
-	Skein_Put64_LSB_First(hashVal,ctx->X,32);
+	size_t bCnt=32;
+	//for(n=0;n<bCnt;n++)
+	//for(n=0;n<32;n++)
+	//	hashVal[n] = (uint8_t) (ctx->X[n>>3] >> (8*(n&7)));
+	hashVal[0] = (uint8_t) (ctx->X[0] >> (0));
+	hashVal[1] = (uint8_t) (ctx->X[0] >> (8));
+	hashVal[2] = (uint8_t) (ctx->X[0] >> (16));
+	hashVal[3] = (uint8_t) (ctx->X[0] >> (24));
+	hashVal[4] = (uint8_t) (ctx->X[0] >> (32));
+	hashVal[5] = (uint8_t) (ctx->X[0] >> (40));
+	hashVal[6] = (uint8_t) (ctx->X[0] >> (48));
+	hashVal[7] = (uint8_t) (ctx->X[0] >> (56));
+	hashVal[8] = (uint8_t) (ctx->X[1] >> (0));
+	hashVal[9] = (uint8_t) (ctx->X[1] >> (8));
+	hashVal[10] = (uint8_t) (ctx->X[1] >> (16));
+	hashVal[11] = (uint8_t) (ctx->X[1] >> (24));
+	hashVal[12] = (uint8_t) (ctx->X[1] >> (32));
+	hashVal[13] = (uint8_t) (ctx->X[1] >> (40));
+	hashVal[14] = (uint8_t) (ctx->X[1] >> (48));
+	hashVal[15] = (uint8_t) (ctx->X[1] >> (56));
+	hashVal[16] = (uint8_t) (ctx->X[2] >> (0));
+	hashVal[17] = (uint8_t) (ctx->X[2] >> (8));
+	hashVal[18] = (uint8_t) (ctx->X[2] >> (16));
+	hashVal[19] = (uint8_t) (ctx->X[2] >> (24));
+	hashVal[20] = (uint8_t) (ctx->X[2] >> (32));
+	hashVal[21] = (uint8_t) (ctx->X[2] >> (40));
+	hashVal[22] = (uint8_t) (ctx->X[2] >> (48));
+	hashVal[23] = (uint8_t) (ctx->X[2] >> (56));
+	hashVal[24] = (uint8_t) (ctx->X[3] >> (0));
+	hashVal[25] = (uint8_t) (ctx->X[3] >> (8));
+	hashVal[26] = (uint8_t) (ctx->X[3] >> (16));
+	hashVal[27] = (uint8_t) (ctx->X[3] >> (24));
+	hashVal[28] = (uint8_t) (ctx->X[3] >> (32));
+	hashVal[29] = (uint8_t) (ctx->X[3] >> (40));
+	hashVal[30] = (uint8_t) (ctx->X[3] >> (48));
+	hashVal[31] = (uint8_t) (ctx->X[3] >> (56));
 	return 0;
 }
