@@ -166,8 +166,10 @@ static void F8(hashState *state)
 	for(i = 0;i < 8;i++)
 		state->x[(8+i) >> 1][(8+i) & 1] ^= ((uint64*)state->buffer)[i];
 }
-HashReturn jh_hash(int hashbitlen, const BitSequence *data,DataLength databitlen, BitSequence *hashval)
+HashReturn jh_hash(const BitSequence *data,BitSequence *hashval)
 {
+	int hashbitlen=256;
+	DataLength databitlen=1600;
 	hashState state;
 	if( hashbitlen == 224 || hashbitlen == 256 || hashbitlen == 384 || hashbitlen == 512 )
 	{
@@ -234,9 +236,11 @@ HashReturn jh_hash(int hashbitlen, const BitSequence *data,DataLength databitlen
 		else
 		{
 			if( (state.datasize_in_buffer & 7) == 0)
-				for(i = (state.databitlen & 0x1ff) >> 3;i < 64;i++)  state.buffer[i] = 0;
+				for(i = (state.databitlen & 0x1ff) >> 3;i < 64;i++)
+					state.buffer[i] = 0;
 			else
-				for(i = ((state.databitlen & 0x1ff) >> 3)+1;i < 64;i++)  state.buffer[i] = 0;
+				for(i = ((state.databitlen & 0x1ff) >> 3)+1;i < 64;i++)
+					state.buffer[i] = 0;
 			state.buffer[((state.databitlen & 0x1ff) >> 3)] |= 1 << (7- (state.databitlen & 7));
 			F8(&state);
 			memset(state.buffer, 0, 64);
@@ -252,10 +256,18 @@ HashReturn jh_hash(int hashbitlen, const BitSequence *data,DataLength databitlen
 		}
 		switch(state.hashbitlen)
 		{
-			case 224: memcpy(hashval,(unsigned char*)state.x+64+36,28); break;
-			case 256: memcpy(hashval,(unsigned char*)state.x+64+32,32); break;
-			case 384: memcpy(hashval,(unsigned char*)state.x+64+16,48); break;
-			case 512: memcpy(hashval,(unsigned char*)state.x+64,64);    break;
+			case 224:
+				memcpy(hashval,(unsigned char*)state.x+64+36,28);
+				break;
+			case 256:
+				memcpy(hashval,(unsigned char*)state.x+64+32,32);
+				break;
+			case 384:
+				memcpy(hashval,(unsigned char*)state.x+64+16,48);
+				break;
+			case 512:
+				memcpy(hashval,(unsigned char*)state.x+64,64);
+				break;
 		}
 		return SUCCESS;
 	}
