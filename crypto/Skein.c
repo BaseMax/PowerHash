@@ -32,15 +32,6 @@ typedef struct
 } Skein_512_Ctxt_t;
 #define SKEIN_BLK_TYPE_MSG      (48)
 #define SKEIN_BLK_TYPE_OUT      (63)
-#define SKEIN_T1_BLK_TYPE(T)   (((uint64_t) (SKEIN_BLK_TYPE_##T)) << 56)
-#define SKEIN_T1_BLK_TYPE_KEY   SKEIN_T1_BLK_TYPE(KEY)
-#define SKEIN_T1_BLK_TYPE_CFG   SKEIN_T1_BLK_TYPE(CFG)
-#define SKEIN_T1_BLK_TYPE_PERS  SKEIN_T1_BLK_TYPE(PERS)
-#define SKEIN_T1_BLK_TYPE_PK    SKEIN_T1_BLK_TYPE(PK)
-#define SKEIN_T1_BLK_TYPE_KDF   SKEIN_T1_BLK_TYPE(KDF)
-#define SKEIN_T1_BLK_TYPE_NONCE SKEIN_T1_BLK_TYPE(NONCE)
-#define SKEIN_T1_BLK_TYPE_MSG   SKEIN_T1_BLK_TYPE(MSG)
-#define SKEIN_T1_BLK_TYPE_OUT_FINAL       (SKEIN_T1_BLK_TYPE(OUT) | (((uint64_t)  1 ) << 63))
 #define SKEIN_MK_64(hi32,lo32)  ((lo32) + (((uint64_t) (hi32)) << 32))
 enum
 {
@@ -65,13 +56,8 @@ const uint64_t SKEIN_512_IV_256[] =
 	SKEIN_MK_64(0xC36FBAF9,0x393AD185),
 	SKEIN_MK_64(0x3EEDBA18,0x33EDFC13)
 };
-#define SKEIN_USE_ASM   (0)
-#define SKEIN_LOOP 001
-#define BLK_BITS        512
-#define KW_TWK_BASE     (0)
-#define KW_KEY_BASE     (3)
-#define ks              (kw + KW_KEY_BASE)
-#define ts              (kw + KW_TWK_BASE)
+#define ks              (kw+3)
+#define ts              (kw)
 static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,size_t blkCnt,size_t byteCntAdd)
 {
 	uint64_t kw[8+4];
@@ -182,7 +168,7 @@ int skein_hash(const uint8_t *data,uint8_t *hashval)
 	memcpy((&state.u.ctx_512)->X,SKEIN_512_IV_256,sizeof((&state.u.ctx_512)->X));
 	(&state.u.ctx_512)->h.T[0] = 0;
 	(&state.u.ctx_512)->h.T[0] = 0;
-	(&state.u.ctx_512)->h.T[1] = (((uint64_t)  1 ) << 62) | SKEIN_T1_BLK_TYPE(MSG);
+	(&state.u.ctx_512)->h.T[1] = (((uint64_t)  1 ) << 62) | (((uint64_t) (SKEIN_BLK_TYPE_MSG)) << 56);
 	(&state.u.ctx_512)->h.bCnt=0;
 	Skein_512_Ctxt_t *ctx=&state.u.ctx_512;
 	Skein_512_Process_Block(ctx,data,3,64);
@@ -198,7 +184,7 @@ int skein_hash(const uint8_t *data,uint8_t *hashval)
 	memset(ctx->b,0,sizeof(ctx->b));
 	((uint64_t *)ctx->b)[0]= (uint64_t) 0;
 	(ctx)->h.T[0] = (0);
-	(ctx)->h.T[1] = (((uint64_t)  1 ) << 62) | SKEIN_T1_BLK_TYPE_OUT_FINAL;
+	(ctx)->h.T[1] = (((uint64_t)  1 ) << 62) | ((((uint64_t) (SKEIN_BLK_TYPE_OUT)) << 56) | (((uint64_t)  1 ) << 63));
 	(ctx)->h.bCnt=0;
 	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(uint64_t));
 	size_t bCnt=32;
