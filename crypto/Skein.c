@@ -275,35 +275,19 @@ void    Skein_Put64_LSB_First(uint8_t *dst,const u64b_t *src,size_t bCnt)
 #endif
 typedef uint8_t BitSequence;
 #define SKEIN_512_NIST_MAX_HASHBITS 512
-//#define SKEIN_MODIFIER_WORDS  2
 #define SKEIN_MODIFIER_WORDS  2
-//#define SKEIN_256_STATE_WORDS 4
 #define SKEIN_256_STATE_WORDS 4
-//#define SKEIN_512_STATE_WORDS 8
 #define SKEIN_512_STATE_WORDS 8
-//#define SKEIN1024_STATE_WORDS 16
 #define SKEIN1024_STATE_WORDS 16
-//#define SKEIN_MAX_STATE_WORDS 16
 #define SKEIN_MAX_STATE_WORDS 16
-//#define SKEIN_256_STATE_BYTES 8*4
 #define SKEIN_256_STATE_BYTES 32
-//#define SKEIN_512_STATE_BYTES 8*8
 #define SKEIN_512_STATE_BYTES 64
-//#define SKEIN1024_STATE_BYTES 8*16
 #define SKEIN1024_STATE_BYTES 128
-//#define SKEIN_256_STATE_BITS  64*4
 #define SKEIN_256_STATE_BITS  256
-//#define SKEIN_512_STATE_BITS  64*8
 #define SKEIN_512_STATE_BITS  512
-//#define SKEIN1024_STATE_BITS  64*16
 #define SKEIN1024_STATE_BITS  1024
-//#define SKEIN_256_BLOCK_BYTES 8*4
 #define SKEIN_256_BLOCK_BYTES 32
-//#define SKEIN_512_BLOCK_BYTES 8*SKEIN_512_STATE_WORDS
-//#define SKEIN_512_BLOCK_BYTES 8*8
 #define SKEIN_512_BLOCK_BYTES 64
-//#define SKEIN1024_BLOCK_BYTES (8*SKEIN1024_STATE_WORDS)
-//#define SKEIN1024_BLOCK_BYTES (8*16)
 #define SKEIN1024_BLOCK_BYTES 128
 #define SKEIN_RND_SPECIAL       (1000u)
 #define SKEIN_RND_KEY_INITIAL   (SKEIN_RND_SPECIAL+0u)
@@ -323,23 +307,14 @@ typedef struct
 } Skein_512_Ctxt_t;
 #define SKEIN_TREE_HASH (1)
 #define SKEIN_T1_BIT(BIT)       ((BIT) - 64)
-//#define SKEIN_T1_POS_TREE_LVL   SKEIN_T1_BIT(112)
 #define SKEIN_T1_POS_TREE_LVL   48
-//#define SKEIN_T1_POS_BIT_PAD    SKEIN_T1_BIT(119)
 #define SKEIN_T1_POS_BIT_PAD    55
-//#define SKEIN_T1_POS_BLK_TYPE   SKEIN_T1_BIT(120)
 #define SKEIN_T1_POS_BLK_TYPE   56
-//#define SKEIN_T1_POS_FIRST      SKEIN_T1_BIT(126)
 #define SKEIN_T1_POS_FIRST      62
-//#define SKEIN_T1_POS_FINAL      SKEIN_T1_BIT(127)
 #define SKEIN_T1_POS_FINAL      63
-//#define SKEIN_T1_FLAG_FIRST     (((u64b_t)  1 ) << SKEIN_T1_POS_FIRST)
 #define SKEIN_T1_FLAG_FIRST     (((u64b_t)  1 ) << 62)
-//#define SKEIN_T1_FLAG_FINAL     (((u64b_t)  1 ) << SKEIN_T1_POS_FINAL)
 #define SKEIN_T1_FLAG_FINAL     (((u64b_t)  1 ) << 63)
-//#define SKEIN_T1_FLAG_BIT_PAD   (((u64b_t)  1 ) << SKEIN_T1_POS_BIT_PAD)
 #define SKEIN_T1_FLAG_BIT_PAD   (((u64b_t)  1 ) << 55)
-//#define SKEIN_T1_TREE_LEVEL(n)  (((u64b_t) (n)) << SKEIN_T1_POS_TREE_LVL)
 #define SKEIN_T1_TREE_LEVEL(n)  (((u64b_t) (n)) << 48)
 #define SKEIN_BLK_TYPE_KEY      (0)
 #define SKEIN_BLK_TYPE_CFG      (4)
@@ -761,61 +736,25 @@ int skein_hash(const BitSequence *data,BitSequence *hashval)
 	Skein_Start_New_Type(&state.u.ctx_512,MSG);
 	Skein_512_Ctxt_t *ctx=&state.u.ctx_512;
 	const uint8_t *msg=data;
-	//size_t msgByteCnt=200;
 	size_t msgByteCnt=8;
 	size_t n;
-	//if(msgByteCnt + ctx->h.bCnt > SKEIN_512_BLOCK_BYTES)
-	//printf("yes\n");
-	//if(ctx->h.bCnt)
-	//if(msgByteCnt > SKEIN_512_BLOCK_BYTES)
-	//n = (199) / SKEIN_512_BLOCK_BYTES;
 	n = 3;
 	Skein_512_Process_Block(ctx,msg,n,SKEIN_512_BLOCK_BYTES);
-	//msgByteCnt -= n * SKEIN_512_BLOCK_BYTES;
-	//msgByteCnt -= 192;
-	//msg        += n * SKEIN_512_BLOCK_BYTES;
 	msg        += 192;
-	//if(msgByteCnt)
 	memcpy(&ctx->b[ctx->h.bCnt],msg,msgByteCnt);
 	ctx->h.bCnt += msgByteCnt;
-
-	//return Skein_512_Final(&state.u.ctx_512,hashval);
-	//static int Skein_512_Final(Skein_512_Ctxt_t *ctx,uint8_t *hashVal)
 	ctx=&state.u.ctx_512;
 	uint8_t *hashVal=hashval;
-
 	size_t i,byteCnt;
 	u64b_t X[SKEIN_512_STATE_WORDS];
 	ctx->h.T[1] |= SKEIN_T1_FLAG_FINAL;
 	if(ctx->h.bCnt < SKEIN_512_BLOCK_BYTES)
 		memset(&ctx->b[ctx->h.bCnt],0,SKEIN_512_BLOCK_BYTES - ctx->h.bCnt);
 	Skein_512_Process_Block(ctx,ctx->b,1,ctx->h.bCnt);
-	//byteCnt = 263 >> 3;
-	//byteCnt = 32;
 	memset(ctx->b,0,sizeof(ctx->b));
-	//memcpy(X,ctx->X,sizeof(X));
-	//for(i=0;i*SKEIN_512_BLOCK_BYTES < byteCnt;i++)
-	//for(i=0;i*64 < byteCnt;i++)
-	/*
-	0*64 < 32
-	1*64 < 32
-	2*64 < 32
-	3*64 < 32
-	*/
-	//for(i=0;i*64 < 32;i++)
 	((u64b_t *)ctx->b)[0]= Skein_Swap64((u64b_t) 0);
 	Skein_Start_New_Type(ctx,OUT_FINAL);
 	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(u64b_t));
-	//n = byteCnt - 0*SKEIN_512_BLOCK_BYTES;
-	//n = byteCnt - 0*64;
-	//n = byteCnt;
-	//if(n >= SKEIN_512_BLOCK_BYTES)
-	//if(n >= 64)
-	//		n  = 64;
-			//n  = SKEIN_512_BLOCK_BYTES;
-	//Skein_Put64_LSB_First(hashVal+0*SKEIN_512_BLOCK_BYTES,ctx->X,n);
-	//Skein_Put64_LSB_First(hashVal+0*64,ctx->X,n);
 	Skein_Put64_LSB_First(hashVal,ctx->X,32);
-	//memcpy(ctx->X,X,sizeof(X));
 	return 0;
 }
