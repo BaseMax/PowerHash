@@ -155,7 +155,6 @@ const u64b_t SKEIN_512_IV_256[] =
 };
 #define SKEIN_USE_ASM   (0)
 #define SKEIN_LOOP 001
-//#define BLK_BITS        (8*64)
 #define BLK_BITS        512
 #define KW_TWK_BASE     (0)
 #define KW_KEY_BASE     (3)
@@ -184,9 +183,6 @@ static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,
 		ks[7] = ctx->X[7];
 		ks[8] = ks[0] ^ ks[1] ^ ks[2] ^ ks[3] ^ ks[4] ^ ks[5] ^ ks[6] ^ ks[7] ^ ((0xA9FC1A22) + (((u64b_t) (0x1BD11BDA)) << 32));
 		ts[2] = ts[0] ^ ts[1];
-		//Skein_Get64_LSB_First(w,blkPtr,8);
-		//void Skein_Get64_LSB_First(u64b_t *dst,const uint8_t *src,size_t 8)
-		//for(n=0;n<8*8;n+=8)
 		for(size_t n=0;n<64;n+=8)
 			w[n/8] = (((u64b_t) blkPtr[n  ])      ) +
 					   (((u64b_t) blkPtr[n+1]) <<  8) +
