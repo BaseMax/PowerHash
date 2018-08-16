@@ -75,7 +75,7 @@ static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,
 		ks[5] = ctx->X[5];
 		ks[6] = ctx->X[6];
 		ks[7] = ctx->X[7];
-		ks[8] = ks[0] ^ ks[1] ^ ks[2] ^ ks[3] ^ ks[4] ^ ks[5] ^ ks[6] ^ ks[7] ^ 2004413935125273122;
+		ks[8] = ks[0] ^ ks[1] ^ ks[2] ^ ks[3] ^ ks[4] ^ ks[5] ^ ks[6] ^ ks[7] ^ 2004413935125273122ull;
 		ts[2] = ts[0] ^ ts[1];
 		for(size_t n=0;n<64;n+=8)
 			w[n/8] = (((uint64_t) blkPtr[n  ])      ) +
@@ -143,69 +143,59 @@ static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,
 		ctx->X[5] = X5 ^ w[5];
 		ctx->X[6] = X6 ^ w[6];
 		ctx->X[7] = X7 ^ w[7];
-		ts[1] &= ~4611686018427387904;
+		ts[1] &= ~4611686018427387904ull;
 	}
 	while(--blkCnt);
 	ctx->h.T[0] = ts[0];
 	ctx->h.T[1] = ts[1];
 }
-typedef struct
-{
-	union
-	{
-		Skein_Ctxt_Hdr_t h;
-		Skein_512_Ctxt_t ctx_512;
-	} u;
-} hashState;
 int skein_hash(const uint8_t *data,uint8_t *hashval)
 {
 	Skein_512_Ctxt_t state;
 	memcpy(state.X,SKEIN_512_IV_256,sizeof(state.X));
 	state.h.T[0] = 0;
-	state.h.T[1] = 8070450532247928832;
-	Skein_512_Ctxt_t *ctx=&state;
-	Skein_512_Process_Block(ctx,data,3,64);
-	memcpy(&ctx->b[0],data+192,8);
-	ctx=&state;
-	ctx->h.T[1] |= 9223372036854775808u;
-	memset(&ctx->b[8],0,56);
-	Skein_512_Process_Block(ctx,ctx->b,1,8);
-	memset(ctx->b,0,sizeof(ctx->b));
-	((uint64_t *)ctx->b)[0]= 0;
-	(ctx)->h.T[0] = 0;
-	(ctx)->h.T[1] = 18374686479671623680u;
-	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(uint64_t));
-	hashval[0] = (uint8_t) (ctx->X[0] >> (0));
-	hashval[1] = (uint8_t) (ctx->X[0] >> (8));
-	hashval[2] = (uint8_t) (ctx->X[0] >> (16));
-	hashval[3] = (uint8_t) (ctx->X[0] >> (24));
-	hashval[4] = (uint8_t) (ctx->X[0] >> (32));
-	hashval[5] = (uint8_t) (ctx->X[0] >> (40));
-	hashval[6] = (uint8_t) (ctx->X[0] >> (48));
-	hashval[7] = (uint8_t) (ctx->X[0] >> (56));
-	hashval[8] = (uint8_t) (ctx->X[1] >> (0));
-	hashval[9] = (uint8_t) (ctx->X[1] >> (8));
-	hashval[10] = (uint8_t) (ctx->X[1] >> (16));
-	hashval[11] = (uint8_t) (ctx->X[1] >> (24));
-	hashval[12] = (uint8_t) (ctx->X[1] >> (32));
-	hashval[13] = (uint8_t) (ctx->X[1] >> (40));
-	hashval[14] = (uint8_t) (ctx->X[1] >> (48));
-	hashval[15] = (uint8_t) (ctx->X[1] >> (56));
-	hashval[16] = (uint8_t) (ctx->X[2] >> (0));
-	hashval[17] = (uint8_t) (ctx->X[2] >> (8));
-	hashval[18] = (uint8_t) (ctx->X[2] >> (16));
-	hashval[19] = (uint8_t) (ctx->X[2] >> (24));
-	hashval[20] = (uint8_t) (ctx->X[2] >> (32));
-	hashval[21] = (uint8_t) (ctx->X[2] >> (40));
-	hashval[22] = (uint8_t) (ctx->X[2] >> (48));
-	hashval[23] = (uint8_t) (ctx->X[2] >> (56));
-	hashval[24] = (uint8_t) (ctx->X[3] >> (0));
-	hashval[25] = (uint8_t) (ctx->X[3] >> (8));
-	hashval[26] = (uint8_t) (ctx->X[3] >> (16));
-	hashval[27] = (uint8_t) (ctx->X[3] >> (24));
-	hashval[28] = (uint8_t) (ctx->X[3] >> (32));
-	hashval[29] = (uint8_t) (ctx->X[3] >> (40));
-	hashval[30] = (uint8_t) (ctx->X[3] >> (48));
-	hashval[31] = (uint8_t) (ctx->X[3] >> (56));
+	state.h.T[1] = 8070450532247928832ull;
+	Skein_512_Process_Block(&state,data,3,64);
+	memcpy(&state.b[0],data+192,8);
+	state.h.T[1] |= 9223372036854775808ull;
+	memset(&state.b[8],0,56);
+	Skein_512_Process_Block(&state,state.b,1,8);
+	memset(state.b,0,sizeof(state.b));
+	((uint64_t *)state.b)[0]= 0;
+	state.h.T[0] = 0;
+	state.h.T[1] = 18374686479671623680ull;
+	Skein_512_Process_Block(&state,state.b,1,sizeof(uint64_t));
+	hashval[0] = (uint8_t) (state.X[0] >> (0));
+	hashval[1] = (uint8_t) (state.X[0] >> (8));
+	hashval[2] = (uint8_t) (state.X[0] >> (16));
+	hashval[3] = (uint8_t) (state.X[0] >> (24));
+	hashval[4] = (uint8_t) (state.X[0] >> (32));
+	hashval[5] = (uint8_t) (state.X[0] >> (40));
+	hashval[6] = (uint8_t) (state.X[0] >> (48));
+	hashval[7] = (uint8_t) (state.X[0] >> (56));
+	hashval[8] = (uint8_t) (state.X[1] >> (0));
+	hashval[9] = (uint8_t) (state.X[1] >> (8));
+	hashval[10] = (uint8_t) (state.X[1] >> (16));
+	hashval[11] = (uint8_t) (state.X[1] >> (24));
+	hashval[12] = (uint8_t) (state.X[1] >> (32));
+	hashval[13] = (uint8_t) (state.X[1] >> (40));
+	hashval[14] = (uint8_t) (state.X[1] >> (48));
+	hashval[15] = (uint8_t) (state.X[1] >> (56));
+	hashval[16] = (uint8_t) (state.X[2] >> (0));
+	hashval[17] = (uint8_t) (state.X[2] >> (8));
+	hashval[18] = (uint8_t) (state.X[2] >> (16));
+	hashval[19] = (uint8_t) (state.X[2] >> (24));
+	hashval[20] = (uint8_t) (state.X[2] >> (32));
+	hashval[21] = (uint8_t) (state.X[2] >> (40));
+	hashval[22] = (uint8_t) (state.X[2] >> (48));
+	hashval[23] = (uint8_t) (state.X[2] >> (56));
+	hashval[24] = (uint8_t) (state.X[3] >> (0));
+	hashval[25] = (uint8_t) (state.X[3] >> (8));
+	hashval[26] = (uint8_t) (state.X[3] >> (16));
+	hashval[27] = (uint8_t) (state.X[3] >> (24));
+	hashval[28] = (uint8_t) (state.X[3] >> (32));
+	hashval[29] = (uint8_t) (state.X[3] >> (40));
+	hashval[30] = (uint8_t) (state.X[3] >> (48));
+	hashval[31] = (uint8_t) (state.X[3] >> (56));
 	return 0;
 }
