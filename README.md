@@ -14,6 +14,8 @@ Algorithms
 Compile and Building
 -------------------
 ```
+$ git clone https://github.com/BaseMax/PowerHash
+$ cd PowerHash
 $ mkdir _build
 $ cd _build
 $ cmake ..
