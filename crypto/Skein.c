@@ -173,7 +173,7 @@ int skein_hash(const uint8_t *data,uint8_t *hashval)
 	memset(ctx->b,0,sizeof(ctx->b));
 	((uint64_t *)ctx->b)[0]= 0;
 	(ctx)->h.T[0] = 0;
-	(ctx)->h.T[1] = 4611686018427387904 | (4539628424389459968 | 9223372036854775808u);
+	(ctx)->h.T[1] = 18374686479671623680u;
 	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(uint64_t));
 	hashval[0] = (uint8_t) (ctx->X[0] >> (0));
 	hashval[1] = (uint8_t) (ctx->X[0] >> (8));
