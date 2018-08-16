@@ -20,8 +20,6 @@
 
 typedef struct
 {
-	size_t hashBitLen;
-	size_t bCnt;
 	uint64_t T[2];
 } Skein_Ctxt_Hdr_t;
 typedef struct
@@ -30,8 +28,6 @@ typedef struct
 	uint64_t X[8];
 	uint8_t  b[64];
 } Skein_512_Ctxt_t;
-#define SKEIN_BLK_TYPE_MSG      (48)
-#define SKEIN_BLK_TYPE_OUT      (63)
 #define SKEIN_MK_64(hi32,lo32)  ((lo32) + (((uint64_t) (hi32)) << 32))
 enum
 {
@@ -79,17 +75,17 @@ static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,
 		ks[5] = ctx->X[5];
 		ks[6] = ctx->X[6];
 		ks[7] = ctx->X[7];
-		ks[8] = ks[0] ^ ks[1] ^ ks[2] ^ ks[3] ^ ks[4] ^ ks[5] ^ ks[6] ^ ks[7] ^ ((0xA9FC1A22) + (((uint64_t) (0x1BD11BDA)) << 32));
+		ks[8] = ks[0] ^ ks[1] ^ ks[2] ^ ks[3] ^ ks[4] ^ ks[5] ^ ks[6] ^ ks[7] ^ 2004413935125273122;
 		ts[2] = ts[0] ^ ts[1];
 		for(size_t n=0;n<64;n+=8)
 			w[n/8] = (((uint64_t) blkPtr[n  ])      ) +
-					   (((uint64_t) blkPtr[n+1]) <<  8) +
-					   (((uint64_t) blkPtr[n+2]) << 16) +
-					   (((uint64_t) blkPtr[n+3]) << 24) +
-					   (((uint64_t) blkPtr[n+4]) << 32) +
-					   (((uint64_t) blkPtr[n+5]) << 40) +
-					   (((uint64_t) blkPtr[n+6]) << 48) +
-					   (((uint64_t) blkPtr[n+7]) << 56) ;
+					 (((uint64_t) blkPtr[n+1]) <<  8) +
+					 (((uint64_t) blkPtr[n+2]) << 16) +
+					 (((uint64_t) blkPtr[n+3]) << 24) +
+					 (((uint64_t) blkPtr[n+4]) << 32) +
+					 (((uint64_t) blkPtr[n+5]) << 40) +
+					 (((uint64_t) blkPtr[n+6]) << 48) +
+					 (((uint64_t) blkPtr[n+7]) << 56) ;
 		ctx->h.T[0] = ts[0];
 		ctx->h.T[1] = ts[1];
 		X0   = w[0] + ks[0];
@@ -147,7 +143,7 @@ static void Skein_512_Process_Block(Skein_512_Ctxt_t *ctx,const uint8_t *blkPtr,
 		ctx->X[5] = X5 ^ w[5];
 		ctx->X[6] = X6 ^ w[6];
 		ctx->X[7] = X7 ^ w[7];
-		ts[1] &= ~(((uint64_t)  1 ) << 62);
+		ts[1] &= ~4611686018427387904;
 	}
 	while(--blkCnt);
 	ctx->h.T[0] = ts[0];
@@ -163,62 +159,53 @@ typedef struct
 } hashState;
 int skein_hash(const uint8_t *data,uint8_t *hashval)
 {
-	hashState state;
-	(&state.u.ctx_512)->h.hashBitLen = 256;
-	memcpy((&state.u.ctx_512)->X,SKEIN_512_IV_256,sizeof((&state.u.ctx_512)->X));
-	(&state.u.ctx_512)->h.T[0] = 0;
-	(&state.u.ctx_512)->h.T[0] = 0;
-	(&state.u.ctx_512)->h.T[1] = (((uint64_t)  1 ) << 62) | (((uint64_t) (SKEIN_BLK_TYPE_MSG)) << 56);
-	(&state.u.ctx_512)->h.bCnt=0;
-	Skein_512_Ctxt_t *ctx=&state.u.ctx_512;
+	Skein_512_Ctxt_t state;
+	memcpy(state.X,SKEIN_512_IV_256,sizeof(state.X));
+	state.h.T[0] = 0;
+	state.h.T[1] = 8070450532247928832;
+	Skein_512_Ctxt_t *ctx=&state;
 	Skein_512_Process_Block(ctx,data,3,64);
-	data        += 192;
-	memcpy(&ctx->b[ctx->h.bCnt],data,8);
-	ctx->h.bCnt += 8;
-	ctx=&state.u.ctx_512;
-	uint8_t *hashVal=hashval;
-	size_t i,byteCnt;
-	ctx->h.T[1] |= (((uint64_t)  1 ) << 63);
-	memset(&ctx->b[ctx->h.bCnt],0,64 - ctx->h.bCnt);
-	Skein_512_Process_Block(ctx,ctx->b,1,ctx->h.bCnt);
+	memcpy(&ctx->b[0],data+192,8);
+	ctx=&state;
+	ctx->h.T[1] |= 9223372036854775808u;
+	memset(&ctx->b[8],0,56);
+	Skein_512_Process_Block(ctx,ctx->b,1,8);
 	memset(ctx->b,0,sizeof(ctx->b));
-	((uint64_t *)ctx->b)[0]= (uint64_t) 0;
-	(ctx)->h.T[0] = (0);
-	(ctx)->h.T[1] = (((uint64_t)  1 ) << 62) | ((((uint64_t) (SKEIN_BLK_TYPE_OUT)) << 56) | (((uint64_t)  1 ) << 63));
-	(ctx)->h.bCnt=0;
+	((uint64_t *)ctx->b)[0]= 0;
+	(ctx)->h.T[0] = 0;
+	(ctx)->h.T[1] = 4611686018427387904 | (4539628424389459968 | 9223372036854775808u);
 	Skein_512_Process_Block(ctx,ctx->b,1,sizeof(uint64_t));
-	size_t bCnt=32;
-	hashVal[0] = (uint8_t) (ctx->X[0] >> (0));
-	hashVal[1] = (uint8_t) (ctx->X[0] >> (8));
-	hashVal[2] = (uint8_t) (ctx->X[0] >> (16));
-	hashVal[3] = (uint8_t) (ctx->X[0] >> (24));
-	hashVal[4] = (uint8_t) (ctx->X[0] >> (32));
-	hashVal[5] = (uint8_t) (ctx->X[0] >> (40));
-	hashVal[6] = (uint8_t) (ctx->X[0] >> (48));
-	hashVal[7] = (uint8_t) (ctx->X[0] >> (56));
-	hashVal[8] = (uint8_t) (ctx->X[1] >> (0));
-	hashVal[9] = (uint8_t) (ctx->X[1] >> (8));
-	hashVal[10] = (uint8_t) (ctx->X[1] >> (16));
-	hashVal[11] = (uint8_t) (ctx->X[1] >> (24));
-	hashVal[12] = (uint8_t) (ctx->X[1] >> (32));
-	hashVal[13] = (uint8_t) (ctx->X[1] >> (40));
-	hashVal[14] = (uint8_t) (ctx->X[1] >> (48));
-	hashVal[15] = (uint8_t) (ctx->X[1] >> (56));
-	hashVal[16] = (uint8_t) (ctx->X[2] >> (0));
-	hashVal[17] = (uint8_t) (ctx->X[2] >> (8));
-	hashVal[18] = (uint8_t) (ctx->X[2] >> (16));
-	hashVal[19] = (uint8_t) (ctx->X[2] >> (24));
-	hashVal[20] = (uint8_t) (ctx->X[2] >> (32));
-	hashVal[21] = (uint8_t) (ctx->X[2] >> (40));
-	hashVal[22] = (uint8_t) (ctx->X[2] >> (48));
-	hashVal[23] = (uint8_t) (ctx->X[2] >> (56));
-	hashVal[24] = (uint8_t) (ctx->X[3] >> (0));
-	hashVal[25] = (uint8_t) (ctx->X[3] >> (8));
-	hashVal[26] = (uint8_t) (ctx->X[3] >> (16));
-	hashVal[27] = (uint8_t) (ctx->X[3] >> (24));
-	hashVal[28] = (uint8_t) (ctx->X[3] >> (32));
-	hashVal[29] = (uint8_t) (ctx->X[3] >> (40));
-	hashVal[30] = (uint8_t) (ctx->X[3] >> (48));
-	hashVal[31] = (uint8_t) (ctx->X[3] >> (56));
+	hashval[0] = (uint8_t) (ctx->X[0] >> (0));
+	hashval[1] = (uint8_t) (ctx->X[0] >> (8));
+	hashval[2] = (uint8_t) (ctx->X[0] >> (16));
+	hashval[3] = (uint8_t) (ctx->X[0] >> (24));
+	hashval[4] = (uint8_t) (ctx->X[0] >> (32));
+	hashval[5] = (uint8_t) (ctx->X[0] >> (40));
+	hashval[6] = (uint8_t) (ctx->X[0] >> (48));
+	hashval[7] = (uint8_t) (ctx->X[0] >> (56));
+	hashval[8] = (uint8_t) (ctx->X[1] >> (0));
+	hashval[9] = (uint8_t) (ctx->X[1] >> (8));
+	hashval[10] = (uint8_t) (ctx->X[1] >> (16));
+	hashval[11] = (uint8_t) (ctx->X[1] >> (24));
+	hashval[12] = (uint8_t) (ctx->X[1] >> (32));
+	hashval[13] = (uint8_t) (ctx->X[1] >> (40));
+	hashval[14] = (uint8_t) (ctx->X[1] >> (48));
+	hashval[15] = (uint8_t) (ctx->X[1] >> (56));
+	hashval[16] = (uint8_t) (ctx->X[2] >> (0));
+	hashval[17] = (uint8_t) (ctx->X[2] >> (8));
+	hashval[18] = (uint8_t) (ctx->X[2] >> (16));
+	hashval[19] = (uint8_t) (ctx->X[2] >> (24));
+	hashval[20] = (uint8_t) (ctx->X[2] >> (32));
+	hashval[21] = (uint8_t) (ctx->X[2] >> (40));
+	hashval[22] = (uint8_t) (ctx->X[2] >> (48));
+	hashval[23] = (uint8_t) (ctx->X[2] >> (56));
+	hashval[24] = (uint8_t) (ctx->X[3] >> (0));
+	hashval[25] = (uint8_t) (ctx->X[3] >> (8));
+	hashval[26] = (uint8_t) (ctx->X[3] >> (16));
+	hashval[27] = (uint8_t) (ctx->X[3] >> (24));
+	hashval[28] = (uint8_t) (ctx->X[3] >> (32));
+	hashval[29] = (uint8_t) (ctx->X[3] >> (40));
+	hashval[30] = (uint8_t) (ctx->X[3] >> (48));
+	hashval[31] = (uint8_t) (ctx->X[3] >> (56));
 	return 0;
 }
