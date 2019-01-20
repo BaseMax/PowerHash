@@ -1,10 +1,8 @@
 # PowerHash
-Optimization Crypto algorithms.
-
+Redesign and Optimize Crypto algorithms.
 
 Algorithms
 -------
-
 - **Blake256** (crypto/blake256.c)
 - **Groestl** (crypto/groestl.c)
 - **Jh** (crypto/jh.c)
