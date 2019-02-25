@@ -1,8 +1,9 @@
-# PowerHash
-Redesign and Optimize Crypto algorithms.
+# Power Hash
+Design and development and Optimize Crypto algorithms.
 
 Algorithms
 -------
+
 - **Blake256** (crypto/blake256.c)
 - **Groestl** (crypto/groestl.c)
 - **Jh** (crypto/jh.c)
@@ -11,6 +12,7 @@ Algorithms
 
 Compile and Building
 -------------------
+
 ```
 $ git clone https://github.com/BaseMax/PowerHash
 $ cd PowerHash
