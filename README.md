@@ -1,5 +1,5 @@
 # Power Hash
-Design and development and Optimize Crypto algorithms.
+Design, development and Optimize Crypto algorithms.
 
 Algorithms
 -------
